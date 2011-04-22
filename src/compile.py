@@ -1,6 +1,7 @@
 import ast
 import codegen
 import pdb
+import sys
 
 def pystoch_compile(filename):
     generator = PyStochCompiler()
@@ -160,3 +161,15 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.body_or_else(node, to_write)
         self.insert(["LOOP_STACK.pop()"])
 
+if __name__ == "__main__":
+    infile = sys.argv[1]
+    transform = pystoch_compile(infile)
+
+    if infile.endswith(".py"):
+        outfile = infile.rstrip(".py") + ".pystoch"
+    else:
+        outfile = infile + ".pystoch"
+    
+    of = open(outfile, 'w')
+    of.write(transform)
+    of.close()
