@@ -161,6 +161,53 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.body_or_else(node, to_write)
         self.insert(["LOOP_STACK.pop()"])
 
+    #def visit_comprehension(self, node, toappend):
+        # self.newline(node)
+        # self.write("for_val = ")
+        # self.visit(node.iter)
+        # self.newline(node)
+        # super(PyStochCompiler, self).newline()
+        # self.insert(["LOOP_STACK.push(0)"])
+        # super(PyStochCompiler, self).newline()
+        # self.write('for ')
+        # self.visit(node.target)
+        # self.write(' in for_val:')
+        # self.new_line = True
+        # self.indentation += 1
+        # self.insert(["LOOP_STACK.increment()"])
+        # self.newline(toappend)
+        # self.write("listcomp.append(")
+        # self.visit(toappend)
+        # self.write(")")
+        # self.indentation -= 1
+        # self.insert(["LOOP_STACK.pop()"])
+
+    def visit_ListComp(self, node):
+        self.newline(node)
+        self.write("listcomp = []")
+        elt = node.elt
+
+        def parse_generator(nodes):
+            node = nodes[-1]
+            tempnode = ast.For()
+            tempnode.target = node.target
+            tempnode.iter = node.iter
+            # deal with ifs here...
+            if len(nodes) == 1:
+                gen = PyStochCompiler()
+                gen.visit(elt)
+                body = [ast.parse("listcomp.append(%s)" % gen.source)] # some better naming scheme here?
+            else:
+                body = [parse_generator(nodes[:-1])]
+            tempnode.body = body
+            tempnode.orelse = None
+            return tempnode
+
+        self.visit(parse_generator(node.generators))            
+            
+    def visit_DictComp(self, node):
+        raise NotImplementedError
+
 if __name__ == "__main__":
     infile = sys.argv[1]
     transform = pystoch_compile(infile)
