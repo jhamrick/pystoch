@@ -4,6 +4,8 @@ import codegen
 import os
 import pdb
 import sys
+import datetime
+import hashlib
 
 def pystoch_compile(source):
     generator = PyStochCompiler()
@@ -18,6 +20,12 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.LINE_STACK = []
         self.FUNCTION_STACK = []
 
+    def _gen_iden(self, node):
+        now = str(datetime.datetime.now())
+        nodeid = str(hash(node))
+        iden = hashlib.md5(now + nodeid).hexdigest()[:8]
+        return "PYSTOCHID_%s" % iden
+
     @property
     def source(self):
         return ''.join(self.result)
@@ -28,20 +36,24 @@ class PyStochCompiler(codegen.SourceGenerator):
             self.write(statement)
 
     def compile(self, src):
-        stmts = [
-            "MODULE_STACK.push('foo')", # need to pick a reasonable value here
-            "LINE_STACK.push(0)",
-            ""
-            ]
-        self.insert(stmts)
-
         if os.path.exists(src):
             source = open(src, 'r').read()
         else:
             source = src
 
         node = ast.parse(source)
+        iden = self._gen_iden(node)
+        stmts = [
+            "MODULE_STACK.push('%s')" % iden,
+            "LINE_STACK.push(0)",
+            ""
+            ]
+        self.insert(stmts)
         self.visit(node)
+        self.insert([
+            "LINE_STACK.pop()",
+            "MODULE_STACK.pop()",
+            ""])
 
     def newline(self, node=None, extra=0):
         super(PyStochCompiler, self).newline(node=node, extra=extra)
@@ -79,12 +91,15 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.write('):')
 
         to_write = [
-            "FUNCTION_STACK.push('foo')", # need to pick a reasonable value here
+            "FUNCTION_STACK.push('%s')" % self._gen_iden(node),
             "LINE_STACK.push(0)"
             ]
 
         self.body(node.body, to_write=to_write)
-        self.insert(['\tFUNCTION_STACK.pop()']) # this is hacky...
+        self.insert([
+            '\tLINE_STACK.pop()',
+            '\tFUNCTION_STACK.pop()'
+            ]) # this indentation is hacky...
 
     def visit_ClassDef(self, node):
         have_args = []
@@ -120,7 +135,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.write(have_args and '):' or ':')
 
         to_write = [
-            "CLASS_STACK.push('foo')", # need to pick a reasonable name here
+            "CLASS_STACK.push('%s')" % self._gen_iden(node),
             "LINE_STACK.push(0)"
             ]
         
@@ -141,7 +156,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         
     def visit_For(self, node):
         self.newline(node)
-        self.write("for_val = ") # probably need to pick a more reasonable value here
+        iden = self._gen_iden(node)
+        self.write("%s = " % iden) # probably need to pick a more reasonable value here
         self.visit(node.iter)
         self.newline(node)
         super(PyStochCompiler, self).newline()
@@ -149,7 +165,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).newline()
         self.write('for ')
         self.visit(node.target)
-        self.write(' in for_val:')
+        self.write(' in %s:' % iden)
 
         to_write = [
             "LOOP_STACK.increment()"
@@ -160,13 +176,14 @@ class PyStochCompiler(codegen.SourceGenerator):
 
     def visit_While(self, node):
         self.newline(node)
-        self.write("while_val = ") # probably need to pick a more reasonable value here
+        iden = self._gen_iden(node)
+        self.write("%s = " % iden) # probably need to pick a more reasonable value here
         self.visit(node.test)
         self.newline(node)
         super(PyStochCompiler, self).newline()
         self.insert(["LOOP_STACK.push(0)"])
         super(PyStochCompiler, self).newline()
-        self.write('while while_val:')
+        self.write('while %s:' % iden)
 
         to_write = [
             "LOOP_STACK.increment()"
@@ -177,7 +194,8 @@ class PyStochCompiler(codegen.SourceGenerator):
 
     def visit_ListComp(self, node):
         self.newline(node)
-        self.write("listcomp = []")
+        iden = self._gen_iden(node)
+        self.write("%s = []" % iden)
         elt = node.elt
 
         def parse_generator(nodes):
@@ -189,14 +207,15 @@ class PyStochCompiler(codegen.SourceGenerator):
             if len(nodes) == 1:
                 gen = PyStochCompiler()
                 gen.visit(elt)
-                body = [ast.parse("listcomp.append(%s)" % gen.source)] # some better naming scheme here?
+                body = [ast.parse("%s.append(%s)" % (iden, gen.source))] # some better naming scheme here?
             else:
                 body = [parse_generator(nodes[:-1])]
             tempnode.body = body
             tempnode.orelse = None
             return tempnode
 
-        self.visit(parse_generator(node.generators))            
+        self.visit(parse_generator(node.generators))
+        return iden
             
     def visit_DictComp(self, node):
         raise NotImplementedError
@@ -204,7 +223,7 @@ class PyStochCompiler(codegen.SourceGenerator):
     def visit_Assign(self, node):
         self.newline(node)
         if isinstance(node.value, _ast.ListComp):
-            self.visit(node.value)
+            iden = self.visit(node.value)
             #print node.value
 
             # TODO: finish this stuff
@@ -214,7 +233,7 @@ class PyStochCompiler(codegen.SourceGenerator):
                 if idx:
                     self.write(', ')
                 self.visit(target)
-            self.write(' = listcomp')
+            self.write(' = %s' % iden)
 
         else:
             super(PyStochCompiler, self).visit_Assign(node)
