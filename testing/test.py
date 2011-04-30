@@ -1,6 +1,7 @@
 import pystoch
 import pystoch.compile as c
 import os
+import re
 
 testfiles = [os.path.join("tests", test) for test in os.listdir("tests") \
              if test.endswith(".py") and test.startswith("compile_")]
@@ -28,16 +29,19 @@ print
 passed = []
 failed = []
 for totest in teststorun:
-    print "Running '%s' test..." % totest
+    print "-----------------------------------------------"
+    print "*** Running '%s' test... ***" % totest
+    print "-----------------------------------------------"
 
     test = tests[totest]
-    result = c.pystoch_compile(tests[totest])
+    result = re.sub(r'PYSTOCHID_[a-z0-9]{8}', 
+                    r'PYSTOCHID',
+                    c.pystoch_compile(tests[totest]))
     exresult = results[totest]
 
     def indent(src):
         return "\n".join(["\t" + line for line in src.split("\n")])
         
-    print "-----------------------------------------------"
     print "TEST"
     print indent(test)
     print "RESULT"
@@ -46,9 +50,13 @@ for totest in teststorun:
     print indent(exresult)
         
     if result != exresult:
+        print "FAILED"
         failed.append(totest)
     else:
+        print "PASSED"
         passed.append(totest)
+
+    print
 
 print "-----------------------------------------------"
 print
