@@ -31,6 +31,9 @@ class PyStochCompiler(codegen.SourceGenerator):
         return ''.join(self.result)
 
     def insert(self, statements):
+        if not isinstance(statements, (list, tuple)):
+            statements = [statements]
+            
         for statement in statements:
             super(PyStochCompiler, self).newline()
             self.write(statement)
@@ -97,8 +100,8 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         self.body(node.body, to_write=to_write)
         self.insert([
-            '\tLINE_STACK.pop()',
-            '\tFUNCTION_STACK.pop()'
+            self.indent_with + 'LINE_STACK.pop()',
+            self.indent_with + 'FUNCTION_STACK.pop()'
             ]) # this indentation is hacky...
 
     def visit_ClassDef(self, node):
@@ -140,6 +143,12 @@ class PyStochCompiler(codegen.SourceGenerator):
             ]
         
         self.body(node.body, to_write=to_write)
+        self.insert([
+            "",
+            self.indent_with + 'LINE_STACK.pop()',
+            self.indent_with + 'CLASS_STACK.pop()',
+            ""
+            ])
 
     def visit_Return(self, node):
         self.newline(node)
@@ -157,7 +166,7 @@ class PyStochCompiler(codegen.SourceGenerator):
     def visit_For(self, node):
         self.newline(node)
         iden = self._gen_iden(node)
-        self.write("%s = " % iden) # probably need to pick a more reasonable value here
+        self.write("%s = " % iden)
         self.visit(node.iter)
         self.newline(node)
         super(PyStochCompiler, self).newline()
@@ -177,7 +186,7 @@ class PyStochCompiler(codegen.SourceGenerator):
     def visit_While(self, node):
         self.newline(node)
         iden = self._gen_iden(node)
-        self.write("%s = " % iden) # probably need to pick a more reasonable value here
+        self.write("%s = " % iden)
         self.visit(node.test)
         self.newline(node)
         super(PyStochCompiler, self).newline()
@@ -207,7 +216,11 @@ class PyStochCompiler(codegen.SourceGenerator):
             if len(nodes) == 1:
                 gen = PyStochCompiler()
                 gen.visit(elt)
-                body = [ast.parse("%s.append(%s)" % (iden, gen.source))] # some better naming scheme here?
+                iden2 = self._gen_iden(gen.source)
+                # TODO: this is a placeholder, should be removed when
+                # I get around to rewriting nested function calls
+                body = [ast.parse("%s = %s" % (iden2, gen.source)),
+                        ast.parse("%s.append(%s)" % (iden, iden2))]
             else:
                 body = [parse_generator(nodes[:-1])]
             tempnode.body = body
@@ -221,13 +234,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         raise NotImplementedError
 
     def visit_Assign(self, node):
-        self.newline(node)
         if isinstance(node.value, _ast.ListComp):
             iden = self.visit(node.value)
-            #print node.value
-
-            # TODO: finish this stuff
-
             self.newline(node)
             for idx, target in enumerate(node.targets):
                 if idx:
