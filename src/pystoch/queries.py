@@ -3,11 +3,11 @@ class RejectionQuery(object):
     def __init__(self):
         pass
 
-    def sample(self):
+    def run(self):
         self.query_model()
         while not self.condition():
             self.query_model()
 
-        return self.query()
+        return self.sample()
 
         

@@ -1,11 +1,13 @@
+import _ast
 import ast
 import codegen
+import os
 import pdb
 import sys
 
-def pystoch_compile(filename):
+def pystoch_compile(source):
     generator = PyStochCompiler()
-    generator.compile(filename)
+    generator.compile(source)
     return generator.source
 
 class PyStochCompiler(codegen.SourceGenerator):
@@ -25,24 +27,19 @@ class PyStochCompiler(codegen.SourceGenerator):
             super(PyStochCompiler, self).newline()
             self.write(statement)
 
-    def compile(self, filename):
+    def compile(self, src):
         stmts = [
-            "###### BEGIN PYSTOCH STACK CONFIG ######",
-            "from pystoch.stack import Stack",
-            "MODULE_STACK = Stack()",
-            "CLASS_STACK = Stack()",
-            "FUNCTION_STACK = Stack()",
-            "LOOP_STACK = Stack()",
-            "LINE_STACK = Stack()",
-            "",
             "MODULE_STACK.push('foo')", # need to pick a reasonable value here
             "LINE_STACK.push(0)",
-            "###### END PYSTOCH STACK CONFIG ######",
             ""
             ]
         self.insert(stmts)
 
-        source = open(filename, 'r').read()
+        if os.path.exists(src):
+            source = open(src, 'r').read()
+        else:
+            source = src
+
         node = ast.parse(source)
         self.visit(node)
 
@@ -87,7 +84,7 @@ class PyStochCompiler(codegen.SourceGenerator):
             ]
 
         self.body(node.body, to_write=to_write)
-
+        self.insert(['\tFUNCTION_STACK.pop()']) # this is hacky...
 
     def visit_ClassDef(self, node):
         have_args = []
@@ -161,26 +158,22 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.body_or_else(node, to_write)
         self.insert(["LOOP_STACK.pop()"])
 
-    #def visit_comprehension(self, node, toappend):
-        # self.newline(node)
-        # self.write("for_val = ")
-        # self.visit(node.iter)
-        # self.newline(node)
-        # super(PyStochCompiler, self).newline()
-        # self.insert(["LOOP_STACK.push(0)"])
-        # super(PyStochCompiler, self).newline()
-        # self.write('for ')
-        # self.visit(node.target)
-        # self.write(' in for_val:')
-        # self.new_line = True
-        # self.indentation += 1
-        # self.insert(["LOOP_STACK.increment()"])
-        # self.newline(toappend)
-        # self.write("listcomp.append(")
-        # self.visit(toappend)
-        # self.write(")")
-        # self.indentation -= 1
-        # self.insert(["LOOP_STACK.pop()"])
+    def visit_While(self, node):
+        self.newline(node)
+        self.write("while_val = ") # probably need to pick a more reasonable value here
+        self.visit(node.test)
+        self.newline(node)
+        super(PyStochCompiler, self).newline()
+        self.insert(["LOOP_STACK.push(0)"])
+        super(PyStochCompiler, self).newline()
+        self.write('while while_val:')
+
+        to_write = [
+            "LOOP_STACK.increment()"
+            ]
+
+        self.body_or_else(node, to_write)
+        self.insert("LOOP_STACK.pop()")
 
     def visit_ListComp(self, node):
         self.newline(node)
@@ -192,7 +185,7 @@ class PyStochCompiler(codegen.SourceGenerator):
             tempnode = ast.For()
             tempnode.target = node.target
             tempnode.iter = node.iter
-            # deal with ifs here...
+            # TODO: deal with ifs here...
             if len(nodes) == 1:
                 gen = PyStochCompiler()
                 gen.visit(elt)
@@ -207,6 +200,24 @@ class PyStochCompiler(codegen.SourceGenerator):
             
     def visit_DictComp(self, node):
         raise NotImplementedError
+
+    def visit_Assign(self, node):
+        self.newline(node)
+        if isinstance(node.value, _ast.ListComp):
+            self.visit(node.value)
+            #print node.value
+
+            # TODO: finish this stuff
+
+            self.newline(node)
+            for idx, target in enumerate(node.targets):
+                if idx:
+                    self.write(', ')
+                self.visit(target)
+            self.write(' = listcomp')
+
+        else:
+            super(PyStochCompiler, self).visit_Assign(node)
 
 if __name__ == "__main__":
     infile = sys.argv[1]

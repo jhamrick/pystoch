@@ -15,7 +15,7 @@ class ShortTest(RejectionQuery):
         else:
             self.b = flip(0.4)
 
-    def query(self):
+    def sample(self):
         return self.a
 
     def condition(self):
