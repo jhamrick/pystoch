@@ -15,6 +15,8 @@ import os
 import pdb
 import sys
 
+from _ast import If
+
 def pystoch_compile(source):
     """Compile python to pystoch.
 
@@ -417,6 +419,45 @@ class PyStochCompiler(codegen.SourceGenerator):
             
     def visit_DictComp(self, node):
         raise NotImplementedError
+
+    def visit_If(self, node):
+        iden = self._gen_iden(node)
+        self.newline(node)
+        self.write("%s = " % iden)
+        self.visit(node.test)
+
+        orig_node = node
+        elif_idens = []
+        while True:
+            else_ = node.orelse
+            if len(else_) == 1 and isinstance(else_[0], If):
+                node = else_[0]
+                elif_idens.append(self._gen_iden(node))
+                self.newline(node)
+                self.write("%s = " % elif_idens[-1])
+                self.visit(node.test)
+            else:
+                break
+
+        node = orig_node
+        self.newline(node)
+        self.write('if %s:' % iden)
+        self.body(node.body)
+
+        i = 0
+        while True:
+            else_ = node.orelse
+            if len(else_) == 1 and isinstance(else_[0], If):
+                node = else_[0]
+                self.newline()
+                self.write('elif %s:' % elif_idens[i])
+                self.body(node.body)
+                i += 1
+            else:
+                self.newline()
+                self.write('else:')
+                self.body(else_)
+                break
 
     def visit_Assign(self, node):
         if isinstance(node.value, _ast.ListComp):
