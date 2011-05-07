@@ -46,19 +46,18 @@ class UnexpectedCallException(Exception):
     def __str__(self):
         return repr(self.value)
 
-class NodeChecker(ast.NodeVisitor):
+class NodeCounter(ast.NodeVisitor):
     def generic_visit(self, node):
+        total = 0
         for field, value in ast.iter_fields(node):
             if isinstance(value, list):
                 for item in value:
                     if isinstance(item, _ast.AST):
-                        if self.visit(item):
-                            return True
+                        total += self.visit(item)
             elif isinstance(value, _ast.AST):
-                if self.visit(value):
-                    return True
+                total += self.visit(value)
 
-        return False
+        return total
 
 class PyStochCompiler(codegen.SourceGenerator):
     """A visitor class to transform a python abstract syntax tree into
@@ -330,12 +329,12 @@ class PyStochCompiler(codegen.SourceGenerator):
         """
         
         iden = self._gen_iden(value)
-        node = _ast.Assign()
-        node.targets = [ast.parse(iden).body[0].value]
-        node.value = value
+        node = _ast.Assign(
+            targets=[ast.parse(iden).body[0].value],
+            value=value)
         return iden, node
 
-    def should_rewrite(self, node):
+    def should_rewrite(self, node, threshold=1):
         """Checks whether or not a node (_ast.AST) contains any Call
         nodes or any ListComps.  If so, this indicates that the node
         should probably be rewritten.
@@ -352,15 +351,25 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        class CallChecker(NodeChecker):
+        class Count(NodeCounter):
             def visit_Call(self, node):
-                return True
+                total = 1
+                for arg in node.args:
+                    total += self.visit(arg)
+                for keyword in node.keywords:
+                    total += self.visit(keyword)
+                if node.starargs is not None:
+                    total += self.visit(node.starargs)
+                if node.kwargs is not None:
+                    total += self.visit(node.kwargs)
 
-        class ListCompChecker(NodeChecker):
+                return total
+
             def visit_ListComp(self, node):
-                return True
+                return 1
 
-        return CallChecker().visit(node) or ListCompChecker().visit(node)
+        total = Count().visit(node)
+        return total > threshold
 
     def contains_return(self, node):
         """Checks whether or not a node (_ast.AST) contains any Return nodes.
@@ -377,12 +386,11 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        class ReturnChecker(NodeChecker):
+        class ReturnChecker(NodeCounter):
             def visit_Return(self, node):
-                return True
+                return 1
 
-        rc = ReturnChecker()
-        return rc.visit(node)
+        return ReturnChecker().visit(node)
 
     def _extract_call(self, node):
         """Takes a node, checks to see if there are any Call nodes in
@@ -403,25 +411,65 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        class ReplaceCall(ast.NodeTransformer):
+        class Replace(ast.NodeTransformer):
 
-            def __init__(self, callback, to_assign):
+            # TODO: passing in to_assign like this will possibly
+            # create hash conflicts, I think
+
+            def __init__(self, callback, should_rewrite, to_assign):
                 self.callback = callback
                 self.to_assign = to_assign
-            
+                self.should_rewrite = should_rewrite
+                self.done = False
+                
             def visit_Call(self, node):
+                if self.done: return node
+                
+                for arg in xrange(len(node.args)):
+                    new = self.visit(node.args[arg])
+                    if new != node.args[arg]:
+                        node.args[arg] = new
+                        self.done = True
+                        return node
+
+                for arg in xrange(len(node.keywords)):
+                    new = self.visit(node.keywords[arg])
+                    if new != node.keywords[arg]:
+                        node.keywords[arg] = new
+                        self.done = True
+                        return node
+
+                if node.starargs is not None:
+                    new = self.visit(node.starargs)
+                    if new != node.starargs:
+                        node.starargs = new
+                        self.done = True
+                        return node
+
+                if node.kwargs is not None:
+                    new = self.visit(node.kwargs)
+                    if new != node.kwargs:
+                        node.kwargs = new
+                        self.done = True
+                        return node
+
+                iden, assignment = self.to_assign(node)
+                self.callback(assignment)
+                return ast.parse(iden).body[0].value
+            
+            def visit_ListComp(self, node):
                 iden, assignment = self.to_assign(node)
                 self.callback(assignment)
                 return ast.parse(iden).body[0].value
 
-        newnode = ReplaceCall(self.visit, self.to_assign).visit(node)
+        newnode = Replace(self.visit, self.should_rewrite, self.to_assign).visit(node)
         return newnode
 
-    def extract_calls(self, node):
-        rw = self.should_rewrite(node)
+    def extract_calls(self, node, threshold=1):
+        rw = self.should_rewrite(node, threshold=threshold)
         while rw:
             node = self._extract_call(node)
-            rw = self.should_rewrite(node)
+            rw = self.should_rewrite(node, threshold=threshold)
 
         return node
 
@@ -545,24 +593,14 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
+        node.value = self.extract_calls(node.value)
+
         if isinstance(node.value, _ast.ListComp):
-            iden = self.visit(node.value)
-
-            self.insert("# in assign, iden is %s" % iden)
-            self.newline(node)
-            for idx, target in enumerate(node.targets):
-                if idx:
-                    self.write(', ')
-                self.visit(target)
-            self.write(' = %s' % iden)
-            return
-
-        elif isinstance(node.value, _ast.Call):
-            return super(PyStochCompiler, self).visit_Assign(node)
-
-        else:
-            node = self.extract_calls(node)
-
+            iden = self.visit_ListComp(node.value)
+            node = ast.Assign(
+                value = ast.parse(iden).body[0].value,
+                targets = node.targets)
+        
         return super(PyStochCompiler, self).visit_Assign(node)
 
     def visit_AugAssign(self, node):
@@ -775,6 +813,14 @@ class PyStochCompiler(codegen.SourceGenerator):
         
         raise NotImplementedError, "Exec statements are not supported at this time"
 
+    def visit_Expr(self, node):
+        if isinstance(node.value, _ast.Call):
+            self.visit_Call(node.value, True)
+
+        else:
+            node.value = self.extract_calls(node.value)
+            super(PyStochCompiler, self).visit_Expr(node)
+
     # 2) Expressions
 
     def visit_BoolOp(self, node):
@@ -840,7 +886,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         properly.
 
         """
-        
+
         # make an identifier for the list
         self.newline(node)
         iden = self._gen_iden(node)
@@ -858,9 +904,9 @@ class PyStochCompiler(codegen.SourceGenerator):
             tempnode.iter = node.iter
             # TODO: deal with ifs here...
             if len(nodes) == 1:
-                iden2, assignment = self.to_assign(elt)
-                body = [assignment, 
-                        ast.parse("%s.append(%s)" % (iden, iden2))]
+                append_node = ast.parse("%s.append(%s)" % (iden, codegen.to_source(elt))).body[0]
+                #append_node = self.extract_calls(append_node)
+                body = [append_node]
             else:
                 body = [parse_generator(nodes[:-1])]
                 
@@ -871,7 +917,6 @@ class PyStochCompiler(codegen.SourceGenerator):
         # visit the for loop
         self.visit(parse_generator(node.generators))
 
-        # return the identifier of the list we created
         return iden
             
     def visit_SetComp(self, node):
@@ -902,7 +947,24 @@ class PyStochCompiler(codegen.SourceGenerator):
             self.visit(right)
         self.write(')')
 
-    def visit_Call(self, node):
+    def visit_Call(self, node, newline=False):
+        #print codegen.to_source(node)
+        #node = self.extract_calls(node)
+        #print codegen.to_source(node)
+        
+        threshold = 0
+        for arg in xrange(len(node.args)):
+            node.args[arg] = self.extract_calls(node.args[arg], threshold=threshold)
+        for arg in xrange(len(node.keywords)):
+            node.keywords[arg].value = self.extract_calls(node.keywords[arg].value, threshold=threshold)
+        if node.starargs is not None:
+            node.starargs = self.extract_calls(node.starargs, threshold=threshold)
+        if node.kwargs is not None:
+            node.kwargs = self.extract_calls(node.kwargs, threshold=threshold)
+
+        if newline:
+            self.newline(node)
+        
         super(PyStochCompiler, self).visit_Call(node)
 
     def visit_Attribute(self, node):
