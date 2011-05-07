@@ -988,7 +988,11 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_UnaryOp(node)
 
     def visit_Lambda(self, node):
-        super(PyStochCompiler, self).visit_Lambda(node)
+        """Lambdas are not supported at this time.
+
+        """
+
+        raise NotImplementedError, "Lambda nodes are not supported at this time."
 
     def visit_IfExp(self, node):
         """IfExps are not supported at this time.
