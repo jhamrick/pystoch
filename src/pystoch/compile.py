@@ -47,6 +47,10 @@ class UnexpectedCallException(Exception):
         return repr(self.value)
 
 class NodeCounter(ast.NodeVisitor):
+    """Count the number of times a node appears.
+
+    """
+    
     def generic_visit(self, node):
         total = 0
         for field, value in ast.iter_fields(node):
@@ -335,14 +339,19 @@ class PyStochCompiler(codegen.SourceGenerator):
         return iden, node
 
     def should_rewrite(self, node, threshold=1):
-        """Checks whether or not a node (_ast.AST) contains any Call
-        nodes or any ListComps.  If so, this indicates that the node
-        should probably be rewritten.
+        """Checks whether or not a node (_ast.AST) contains more than
+        the minimum number of Call nodes and ListComps (though
+        ListComps are only counted once, if they have more ListComps
+        inside them they will not be counted).  If so, this indicates
+        that the node should probably be rewritten.
 
         Parameters
         ----------
         node : _ast.AST
             The node to check for Call/ListComp nodes
+        threshold : int (default=1)
+            The default threshold for how many Call/ListComp nodes
+            should be allowed before the node should be rewritten
 
         Returns
         -------
@@ -392,39 +401,40 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         return ReturnChecker().visit(node)
 
-    def _extract_call(self, node):
-        """Takes a node, checks to see if there are any Call nodes in
-        it, and if so, extracts the first one it finds, places it
-        inside a temporary variable, and then replaces the Call node
-        in `node` with the temporary variable.  Returns the new,
-        modified node.
+    def _extract(self, node):
+        """Takes a node, checks to see if there are any Call nodes or
+        ListComp nodes in it, and if so, extracts either the first
+        ListComp or deepest Call child of the first Call node, places
+        it inside a temporary variable, and then replaces the
+        Call/ListComp node in `node` with the temporary variable.
+        Returns the new, modified node.
 
         Parameters
         ----------
         node : _ast.AST
-            The node to extract any Call nodes from
+            The node to extract any Call/ListComp nodes from
 
         Returns
         -------
         out : _ast.AST
-            The modified node, with a single Call node removed
+            The modified node, with a single Call/ListComp node
+            removed
 
         """
 
         class Replace(ast.NodeTransformer):
 
-            # TODO: passing in to_assign like this will possibly
-            # create hash conflicts, I think
-
+            # we need to pass in various parent functions
             def __init__(self, callback, should_rewrite, to_assign):
                 self.callback = callback
                 self.to_assign = to_assign
                 self.should_rewrite = should_rewrite
                 self.done = False
-                
+
             def visit_Call(self, node):
                 if self.done: return node
-                
+
+                # check arguments
                 for arg in xrange(len(node.args)):
                     new = self.visit(node.args[arg])
                     if new != node.args[arg]:
@@ -432,6 +442,7 @@ class PyStochCompiler(codegen.SourceGenerator):
                         self.done = True
                         return node
 
+                # check keyword arguments
                 for arg in xrange(len(node.keywords)):
                     new = self.visit(node.keywords[arg])
                     if new != node.keywords[arg]:
@@ -439,6 +450,7 @@ class PyStochCompiler(codegen.SourceGenerator):
                         self.done = True
                         return node
 
+                # check *args
                 if node.starargs is not None:
                     new = self.visit(node.starargs)
                     if new != node.starargs:
@@ -446,6 +458,7 @@ class PyStochCompiler(codegen.SourceGenerator):
                         self.done = True
                         return node
 
+                # check **kwargs
                 if node.kwargs is not None:
                     new = self.visit(node.kwargs)
                     if new != node.kwargs:
@@ -453,22 +466,47 @@ class PyStochCompiler(codegen.SourceGenerator):
                         self.done = True
                         return node
 
+                # rewrite the call node
                 iden, assignment = self.to_assign(node)
+                self.done = True
                 self.callback(assignment)
                 return ast.parse(iden).body[0].value
             
             def visit_ListComp(self, node):
+                if self.done: return node
+
+                # rewrite the listcomp
                 iden, assignment = self.to_assign(node)
+                self.done = True
                 self.callback(assignment)
                 return ast.parse(iden).body[0].value
 
         newnode = Replace(self.visit, self.should_rewrite, self.to_assign).visit(node)
         return newnode
 
-    def extract_calls(self, node, threshold=1):
+    def extract(self, node, threshold=1):
+        """Extract all Call/ListComp nodes above a certain threshold
+        from a node.  This repeatedly calls self._extract(node) until
+        self.should_rewrite(node, threshold=threshold) is False.
+
+        Parameters
+        ----------
+        node : _ast.AST
+            The node to extract Call/ListComp nodes from.
+        threshold : int (default=1)
+            The minimum number of Call/ListComp nodes that are allowed
+            before extraction will take place
+
+        Returns
+        -------
+        out : _ast.AST
+            The modified `node`, minus Call/ListComp nodes.
+
+        """
+        
         rw = self.should_rewrite(node, threshold=threshold)
         while rw:
-            node = self._extract_call(node)
+            node = self._extract(node)
             rw = self.should_rewrite(node, threshold=threshold)
 
         return node
@@ -556,7 +594,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        node = self.extract_calls(node)
+        node = self.extract(node)
 
         # pop the line and function stacks
         self.insert([
@@ -593,8 +631,11 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        node.value = self.extract_calls(node.value)
+        # do Call/ListComp extraction on the node's value
+        node.value = self.extract(node.value)
 
+        # if the value is a list comprehension, the we need to handle
+        # it specially
         if isinstance(node.value, _ast.ListComp):
             iden = self.visit_ListComp(node.value)
             node = ast.Assign(
@@ -622,7 +663,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         
         # if there is no call node, then we can just call super
         if self.should_rewrite(node):
-            node = self.extract_calls(node)
+            node = self.extract(node)
             
         super(PyStochCompiler, self).visit_Print(node)
 
@@ -634,11 +675,9 @@ class PyStochCompiler(codegen.SourceGenerator):
         increment that value after each pass of the loop, and pop the
         value after the loop has terminated.
 
-        TODO: needs to handle orelse statements
-
         """
 
-        node.iter = self.extract_calls(node.iter)
+        node.iter = self.extract(node.iter)
 
         # push a new value onto the loop stack
         self.newline(node)
@@ -667,11 +706,9 @@ class PyStochCompiler(codegen.SourceGenerator):
         increment that value after each pass of the loop, and pop the
         value after the loop has terminated.
 
-        TODO: needs to handle orelse statements
-
         """
 
-        node.test = self.extract_calls(node.test)
+        node.test = self.extract(node.test)
 
         # push a new value onto the loop stack
         self.newline(node)
@@ -696,12 +733,12 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        node.test = self.extract_calls(node.test)
+        node.test = self.extract(node.test)
 
         while True:
             else_ = node.orelse
             if len(else_) == 1 and isinstance(else_[0], _ast.If):
-                node.orelse[0] = self.extract_calls(node.orelse[0]) 
+                node.orelse[0] = self.extract(node.orelse[0]) 
             else:
                 break
 
@@ -726,11 +763,11 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        node.type = self.extract_calls(node.type)
+        node.type = self.extract(node.type)
         if node.inst is not None:
-            node.inst = self.extract_calls(node.inst)
+            node.inst = self.extract(node.inst)
         if node.tback is not None:
-            node.tback = self.extract_calls(node.tback)
+            node.tback = self.extract(node.tback)
         
         super(PyStochCompiler, self).visit_Raise(node)
 
@@ -770,9 +807,9 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        node.test = self.extract_calls(node.test)
+        node.test = self.extract(node.test)
         if node.msg is not None:
-            node.msg = self.extract_calls(node.msg)
+            node.msg = self.extract(node.msg)
 
         # write the test case of the assert statement
         self.newline(node)
@@ -814,11 +851,31 @@ class PyStochCompiler(codegen.SourceGenerator):
         raise NotImplementedError, "Exec statements are not supported at this time"
 
     def visit_Expr(self, node):
+        """Rewrite the Expr visitor function to deal with Call nodes
+        that are on a single line by themselves.  These must be
+        handled specially, because we want to make sure that the first
+        Call node remains on a line by itself, e.g.:
+
+        PYSTOCHID_AAAAAAAA = bar()
+        foo(PYSTOCHID_AAAAAAAA)
+
+        And not:
+
+        PYSTOCHID_AAAAAAAA = bar()
+        PYSTOCHID_BBBBBBBB = foo(PYSTOCHID_AAAAAAAA)
+        PYSTOCHID_BBBBBBBB
+
+        If it is not a call function, then it extracts the node's
+        value as per usual and then calls the super visit_Expr on the
+        new node.
+
+        """
+        
         if isinstance(node.value, _ast.Call):
             self.visit_Call(node.value, True)
 
         else:
-            node.value = self.extract_calls(node.value)
+            node.value = self.extract(node.value)
             super(PyStochCompiler, self).visit_Expr(node)
 
     # 2) Expressions
@@ -905,7 +962,7 @@ class PyStochCompiler(codegen.SourceGenerator):
             # TODO: deal with ifs here...
             if len(nodes) == 1:
                 append_node = ast.parse("%s.append(%s)" % (iden, codegen.to_source(elt))).body[0]
-                #append_node = self.extract_calls(append_node)
+                #append_node = self.extract(append_node)
                 body = [append_node]
             else:
                 body = [parse_generator(nodes[:-1])]
@@ -948,19 +1005,33 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.write(')')
 
     def visit_Call(self, node, newline=False):
-        #print codegen.to_source(node)
-        #node = self.extract_calls(node)
-        #print codegen.to_source(node)
+        """Rewrite the Call visitor function to extract any child Call
+        nodes.
+
+        Parameters
+        ----------
+        node : _ast.Call
+            The Call node to rewrite.
+        newline : boolean (default=False)
+            Whether or not to insert a newline before transforming the
+            Call node to source.  This should be set to True when, for
+            example, the Call node is by itself on a line.
+
+        """
         
+        # extract each of the children of the Call node with threshold
+        # zero, that is, we already know that we have one call node
+        # (because we're visiting it), so we don't want any of its
+        # children to also be call nodes
         threshold = 0
         for arg in xrange(len(node.args)):
-            node.args[arg] = self.extract_calls(node.args[arg], threshold=threshold)
+            node.args[arg] = self.extract(node.args[arg], threshold=threshold)
         for arg in xrange(len(node.keywords)):
-            node.keywords[arg].value = self.extract_calls(node.keywords[arg].value, threshold=threshold)
+            node.keywords[arg].value = self.extract(node.keywords[arg].value, threshold=threshold)
         if node.starargs is not None:
-            node.starargs = self.extract_calls(node.starargs, threshold=threshold)
+            node.starargs = self.extract(node.starargs, threshold=threshold)
         if node.kwargs is not None:
-            node.kwargs = self.extract_calls(node.kwargs, threshold=threshold)
+            node.kwargs = self.extract(node.kwargs, threshold=threshold)
 
         if newline:
             self.newline(node)
