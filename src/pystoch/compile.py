@@ -93,6 +93,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         
         super(PyStochCompiler, self).__init__(' ' * 4, False)
         self.idens = []
+        self.inloop = False
         
     def _gen_iden(self, node):
         """Generate a random unique PyStoch identifier.
@@ -641,14 +642,22 @@ class PyStochCompiler(codegen.SourceGenerator):
         node = self.extract(node)
 
         # pop the line and function stacks
-        self.insert([
-            "LINE_STACK.pop()",
-            "FUNCTION_STACK.pop()"
-            ])
+        if self.inloop:
+            self.insert([
+                "LINE_STACK.pop()",
+                "LOOP_STACK.pop()",
+                "FUNCTION_STACK.pop()"
+                ])
+        else:
+            self.insert([
+                "LINE_STACK.pop()",
+                "FUNCTION_STACK.pop()"
+                ])
 
         super(PyStochCompiler, self).newline()
         self.write("return ")
-        self.visit(node.value)
+        if node.value is not None:
+            self.visit(node.value)
 
     def visit_Delete(self, node):
         """Calls the superclass' visit_Delete method, while
@@ -758,7 +767,10 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.write(':')
 
         # increment the loop stack at the end of the body
+        inloop = self.inloop
+        self.inloop = True
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
+        self.inloop = inloop
         
         # and finally, pop the loop stack after the for loop is over
         self.insert("LOOP_STACK.pop()")
@@ -786,7 +798,10 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.write(':')
 
         # increment the loop stack at the end of the body
+        inloop = self.inloop
+        self.inloop = True
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
+        self.inloop = inloop
 
         # and finally, pop the loop stack at the end of the body
         self.insert("LOOP_STACK.pop()")
@@ -1135,20 +1150,39 @@ class PyStochCompiler(codegen.SourceGenerator):
         lineiden = self._gen_iden(ast.parse("LINE_STACK.pop()").body[0])
         funciden = self._gen_iden(ast.parse("FUNCTION_STACK.pop()").body[0])
 
+        if self.inloop:
+            loopiden = self._gen_iden(ast.parse("LOOP_STACK.pop()").body[0])
+
         # pop the line and function stacks
-        self.insert([
-            "%s = LINE_STACK.pop()" % lineiden,
-            "%s = FUNCTION_STACK.pop()" % funciden
-            ])
+        if self.inloop:
+            self.insert([
+                "%s = LINE_STACK.pop()" % lineiden,
+                "%s = LOOP_STACK.pop()" % loopiden,
+                "%s = FUNCTION_STACK.pop()" % funciden
+                ])
+        else:
+            self.insert([
+                "%s = LINE_STACK.pop()" % lineiden,
+                "%s = FUNCTION_STACK.pop()" % funciden
+                ])
+
 
         super(PyStochCompiler, self).newline()
         self.write("yield ")
-        self.visit(node.value)
+        if node.value is not None:
+            self.visit(node.value)
 
-        self.insert([
-            "FUNCTION_STACK.push('%s')" % funciden,
-            "LINE_STACK.push('%s')" % lineiden
-            ])
+        if self.inloop:
+            self.insert([
+                "FUNCTION_STACK.push('%s')" % funciden,
+                "LOOP_STACK.push('%s')" % loopiden,
+                "LINE_STACK.push('%s')" % lineiden
+                ])
+        else:
+            self.insert([
+                "FUNCTION_STACK.push('%s')" % funciden,
+                "LINE_STACK.push('%s')" % lineiden
+                ])
 
     def visit_Compare(self, node):
         """Rewrite the Compare visitor function to deal with extraction.
