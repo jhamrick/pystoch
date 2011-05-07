@@ -864,9 +864,25 @@ class PyStochCompiler(codegen.SourceGenerator):
                 self.visit(node.msg)
 
     def visit_Import(self, node):
+        """The superclass' visit_Import method is called.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_Import
+
+        """
+
         super(PyStochCompiler, self).visit_Import(node)
 
     def visit_ImportFrom(self, node):
+        """The superclass' visit_ImportFrom method is called.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_ImportFrom
+
+        """
+
         super(PyStochCompiler, self).visit_ImportFrom(node)
 
     def visit_Exec(self, node):
