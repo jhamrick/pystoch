@@ -787,7 +787,30 @@ class PyStochCompiler(codegen.SourceGenerator):
             else:
                 break
 
-        super(PyStochCompiler, self).visit_If(node)
+        self.newline(node)
+        self.write('if ')
+        self.visit(node.test)
+        self.write(':')
+        self.body(node.body)
+        while True:
+            else_ = node.orelse
+            if len(else_) == 1 and isinstance(else_[0], _ast.If):
+                node = else_[0]
+                self.newline()
+                self.write('elif ')
+                self.visit(node.test)
+                self.write(':')
+                self.body(node.body)
+                
+            # handle the case were there is no else statement...
+            elif len(else_) == 0:
+                break
+            
+            else:
+                self.newline()
+                self.write('else:')
+                self.body(else_)
+                break
 
     def visit_With(self, node):
         """With statements are not supported at this time.
@@ -968,6 +991,10 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_Lambda(node)
 
     def visit_IfExp(self, node):
+        node.body = self.extract(node.body)
+        node.test = self.extract(node.test)
+        node.orelse = self.extract(node.orelse)
+        
         super(PyStochCompiler, self).visit_IfExp(node)
 
     def visit_Dict(self, node):
@@ -1004,15 +1031,32 @@ class PyStochCompiler(codegen.SourceGenerator):
             tempnode = ast.For()
             tempnode.target = node.target
             tempnode.iter = node.iter
-            # TODO: deal with ifs here...
+                        
             if len(nodes) == 1:
                 append_node = ast.parse("%s.append(%s)" % (iden, codegen.to_source(elt))).body[0]
-                #append_node = self.extract(append_node)
                 body = [append_node]
             else:
                 body = [parse_generator(nodes[:-1])]
                 
-            tempnode.body = body
+            if len(node.ifs) == 1:
+                ifnode = _ast.If(
+                    test=node.ifs[0],
+                    body=body,
+                    orelse=[])
+                tempnode.body = [ifnode]
+
+            elif len(node.ifs) > 1:
+                ifnode = _ast.If(
+                    test=_ast.BoolOp(
+                        op=_ast.And(),
+                        values=node.ifs),
+                    body=body,
+                    orelse=[])
+                tempnode.body = [ifnode]
+
+            else:
+                tempnode.body = body
+                
             tempnode.orelse = None
             return tempnode
 
