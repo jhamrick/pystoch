@@ -668,10 +668,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         
     def visit_Assign(self, node):
         """Rewrite the Assign visitor function to deal with list
-        comprehensions.
-
-        TODO: this should also deal with compound and nested function
-        calls
+        comprehensions and function calls.
 
         """
 
@@ -694,8 +691,27 @@ class PyStochCompiler(codegen.SourceGenerator):
         return super(PyStochCompiler, self).visit_Assign(node)
 
     def visit_AugAssign(self, node):
-        """TODO"""
+        """Rewrite the AugAssign visitor function to deal with list
+        comprehensions and function calls.
+
+        """
         
+        # do Call/ListComp extraction on the node's value
+        node.value = self.extract(node.value, lcthreshold=1)
+
+        # if the value is a list comprehension, the we need to handle
+        # it specially
+        if isinstance(node.value, _ast.ListComp):
+            iden = self.visit_ListComp(node.value)
+            node = ast.Assign(
+                value = ast.parse(iden).body[0].value,
+                targets = node.targets)
+
+        elif isinstance(node.value, _ast.Dict) or \
+                 isinstance(node.value, _ast.List) or \
+                 isinstance(node.value, _ast.Tuple):
+            node.value = self.extract(node.value, threshold=0)
+
         super(PyStochCompiler, self).visit_AugAssign(node)
         
     def visit_Print(self, node):
@@ -1229,7 +1245,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
     def visit_Slice(self, node):
         """Rewrite the Slice visitor function to deal with extraction.
-
+        
         """
 
         if node.lower is not None:
