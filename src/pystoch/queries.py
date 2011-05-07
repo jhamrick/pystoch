@@ -1,13 +1,13 @@
 class RejectionQuery(object):
 
-    def __init__(self):
+    def __init__(self, PYSTOCHOBJ=None):
         pass
+    __init__.random = True
 
-    def run(self):
-        self.query_model()
-        while not self.condition():
-            self.query_model()
+    def run(self, PYSTOCHOBJ=None):
+        self.query_model(PYSTOCHOBJ=PYSTOCHOBJ)
+        while not self.condition(PYSTOCHOBJ=PYSTOCHOBJ):
+            self.query_model(PYSTOCHOBJ=PYSTOCHOBJ)
 
-        return self.sample()
-
-        
+        return self.sample(PYSTOCHOBJ=PYSTOCHOBJ)
+    run.random = True

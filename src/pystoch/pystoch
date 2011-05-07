@@ -8,6 +8,10 @@ import sys
 import tempfile
 import traceback
 
+def pystochfunc(f):
+    f.random = True
+    return f
+
 class PyStochObj(object):
 
     def __init__(self):
@@ -16,25 +20,35 @@ class PyStochObj(object):
         self.func_stack = Stack()
         self.line_stack = Stack()
         self.loop_stack = Stack()
+    
+    def call(self, func, *args, **kwargs):
+        if hasattr(func, "random") and func.random:
+            kwargs['PYSTOCHOBJ'] = self
+            
+        return func(*args, **kwargs)  
         
 def run(prog, args):
     PYSTOCHOBJ = PyStochObj()
-    
+
+    filename = None
     sys.argv = args
+    
     if prog.endswith('.pystoch'):
-        execfile(prog)
+        filename = prog
     else:
         source = c.pystoch_compile(prog)
-        temp = tempfile.NamedTemporaryFile(prefix='tmp_', suffix='.pystoch', dir='/tmp', delete=False)
+        temp = tempfile.NamedTemporaryFile(
+            prefix='tmp_', suffix='.pystoch', dir='/tmp', delete=False)
         temp.write(source)
         temp.close()
+        filename = temp.name
 
-        try:
-            execfile(temp.name)
-        except:
-            traceback.print_exc(file=sys.stderr)
-        finally:
-            os.remove(temp.name)
+    try:
+        execfile(temp.name, {'PYSTOCHOBJ': PYSTOCHOBJ})
+    except:
+        traceback.print_exc(file=sys.stderr)
+    finally:
+        os.remove(temp.name)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run a PyStoch program.')

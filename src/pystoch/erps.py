@@ -1,6 +1,6 @@
 import numpy as np
 
-def binomial(n, p):
+def binomial(n, p, PYSTOCHOBJ=None):
     """Draw a sample from a binomial distribution.
 
     The sample is drawn from a Binomial distribution with specified
@@ -61,7 +61,7 @@ def binomial(n, p):
      
     return np.random.binomial(n, p)
 
-def dirichlet(alpha):
+def dirichlet(alpha, PYSTOCHOBJ=None):
     """Draw a sample from the Dirichlet distribution.
 
     Draw a sample of dimension k from a Dirichlet distribution. A
@@ -100,7 +100,7 @@ def dirichlet(alpha):
     
     return np.random.dirichlet(alpha)
 
-def exponential(scale):
+def exponential(scale, PYSTOCHOBJ=None):
     """Draw a sample from an exponential distribution.
 
     Its probability density function is
@@ -135,7 +135,7 @@ def exponential(scale):
     
     return np.random.exponential(scale)
 
-def flip(weight=0.5):
+def flip(weight=0.5, PYSTOCHOBJ=None):
     """Flip a fair or biased coin.
 
     Given the weight, flip a coin and return True if it comes up heads
@@ -153,7 +153,7 @@ def flip(weight=0.5):
     
     return np.random.uniform(0, 1) <= weight
 
-def gamma(k, theta):
+def gamma(k, theta, PYSTOCHOBJ=None):
     """Draw a sample from a Gamma distribution.
     
     A sample is drawn from a Gamma distribution with specified
@@ -203,7 +203,7 @@ def gamma(k, theta):
     
     return np.random.gamma(shape, scale)
 
-def gaussian(mean, std):
+def gaussian(mean, std, PYSTOCHOBJ=None):
     """Draw a random sample from a normal (Gaussian) distribution.
     
     The probability density function of the normal distribution, first
@@ -253,7 +253,7 @@ def gaussian(mean, std):
 
     return np.random.normal(mu, sigma)
 
-def log_flip(weight=-0.69314718055994529):
+def log_flip(weight=-0.69314718055994529, PYSTOCHOBJ=None):
     """Flip a fair or biased coin.
 
     Given the weight, flip a coin with weight e ** weight and return
@@ -272,7 +272,7 @@ def log_flip(weight=-0.69314718055994529):
     
     return flip(np.e ** weight)
 
-def poisson(lam):
+def poisson(lam, PYSTOCHOBJ=None):
     """Draw a sample from a poisson distribution.
 
     Given the `lam` parameter (for lambda), which is both the mean and
@@ -308,7 +308,7 @@ def poisson(lam):
 
     return np.random.poisson(lam)
 
-def uniform(low, high):
+def uniform(low, high, PYSTOCHOBJ=None):
     """Draw a sample from a uniform distribution.
     
     Samples are uniformly distributed over the half-open interval
