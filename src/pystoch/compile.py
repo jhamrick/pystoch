@@ -384,7 +384,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         rc = ReturnChecker()
         return rc.visit(node)
 
-    def extract_call(self, node):
+    def _extract_call(self, node):
         """Takes a node, checks to see if there are any Call nodes in
         it, and if so, extracts the first one it finds, places it
         inside a temporary variable, and then replaces the Call node
@@ -416,6 +416,14 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         newnode = ReplaceCall(self.visit, self.to_assign).visit(node)
         return newnode
+
+    def extract_calls(self, node):
+        rw = self.should_rewrite(node)
+        while rw:
+            node = self._extract_call(node)
+            rw = self.should_rewrite(node)
+
+        return node
 
     ########### Visitor Functions ###########
 
@@ -500,25 +508,17 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        hascall = self.should_rewrite(node.value)
-        if hascall:
-            # store the value of the return statement in `iden`
-            iden, assignment = self.to_assign(node.value)
-            self.visit(assignment)
+        node = self.extract_calls(node)
 
-        # pop the line and function stacks, then return the stored
-        # value
+        # pop the line and function stacks
         self.insert([
             "LINE_STACK.pop()",
             "FUNCTION_STACK.pop()"
             ])
 
-        if hascall:
-            self.insert("return %s" % iden)
-        else:
-            super(PyStochCompiler, self).newline()
-            self.write("return ")
-            self.visit(node.value)
+        super(PyStochCompiler, self).newline()
+        self.write("return ")
+        self.visit(node.value)
 
     def visit_Delete(self, node):
         """Calls the superclass' visit_Delete method, while
@@ -545,9 +545,6 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        iden = None
-        rw = self.should_rewrite(node.value)
-        
         if isinstance(node.value, _ast.ListComp):
             iden = self.visit(node.value)
 
@@ -563,10 +560,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         elif isinstance(node.value, _ast.Call):
             return super(PyStochCompiler, self).visit_Assign(node)
 
-        elif rw:
-            while rw:
-                node = self.extract_call(node)
-                rw = self.should_rewrite(node.value)
+        else:
+            node = self.extract_calls(node)
 
         return super(PyStochCompiler, self).visit_Assign(node)
 
@@ -588,54 +583,10 @@ class PyStochCompiler(codegen.SourceGenerator):
         """
         
         # if there is no call node, then we can just call super
-        if not self.should_rewrite(node):
-            super(PyStochCompiler, self).visit_Print(node)
-
-        # check if there is a call node in the destination, and if so,
-        # create a temporary variable for it
-        if node.dest is not None:
-            dest_hascall = self.should_rewrite(node.dest)
-            if dest_hascall:
-                destiden, assignment = self.to_assign(node.dest)
-                self.visit(assignment)
-
-        # check the values if they have call nodes, and if so, create
-        # temporary variables for the ones that do
-        validens = []
-        for value in node.values:
-            if self.should_rewrite(value):
-                iden, assignment = self.to_assign(value)
-                validens.append(iden)
-                self.visit(assignment)
-            else:
-                validens.append(None)
+        if self.should_rewrite(node):
+            node = self.extract_calls(node)
             
-        self.newline(node)
-        self.write('print ')
-        want_comma = False
-        if node.dest is not None:
-            self.write(' >> ')
-            # write the destination, using the temporary variable if
-            # it had a call node
-            if dest_hascall:
-                self.write(destiden)
-            else:
-                self.visit(node.dest)
-            want_comma = True
-            
-        for value, iden in zip(node.values, validens):
-            if want_comma:
-                self.write(', ')
-            # write the value, using the temporary variable if it had
-            # a call node
-            if iden is not None:
-                self.write(iden)
-            else:
-                self.visit(value)
-            want_comma = True
-            
-        if not node.nl:
-            self.write(',')
+        super(PyStochCompiler, self).visit_Print(node)
 
     def visit_For(self, node):
         """Rewrite the For visitor function to first store the
@@ -649,11 +600,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        hascall = self.should_rewrite(node.iter)
-        if hascall:
-            # store the value of the iterator for the for loop
-            iden, assignment = self.to_assign(node.iter)
-            self.visit(assignment)
+        node.iter = self.extract_calls(node.iter)
 
         # push a new value onto the loop stack
         self.newline(node)
@@ -664,13 +611,9 @@ class PyStochCompiler(codegen.SourceGenerator):
         # iterate over the stored value for the for loop iterator
         self.write('for ')
         self.visit(node.target)
-
-        if hascall:
-            self.write(' in %s:' % iden)
-        else:
-            self.write(' in ')
-            self.visit(node.iter)
-            self.write(':')
+        self.write(' in ')
+        self.visit(node.iter)
+        self.write(':')
 
         # increment the loop stack at the end of the body
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
@@ -690,11 +633,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        hascall = self.should_rewrite(node.test)
-        if hascall:
-            # store the value of the test case for the while loop
-            iden, assignment = self.to_assign(node.test)
-            self.visit(assignment)
+        node.test = self.extract_calls(node.test)
 
         # push a new value onto the loop stack
         self.newline(node)
@@ -702,13 +641,9 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.insert(["LOOP_STACK.push(0)"])
         super(PyStochCompiler, self).newline()
 
-        if hascall:
-            # iterate over the stored test case
-            self.write('while %s:' % iden)
-        else:
-            self.write('while ')
-            self.visit(node.test)
-            self.write(':')
+        self.write('while ')
+        self.visit(node.test)
+        self.write(':')
 
         # increment the loop stack at the end of the body
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
@@ -723,63 +658,16 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        ifhascall = self.should_rewrite(node.test)
-        if ifhascall:
-            # store the if test in a temporary variable
-            ifiden, assignment = self.to_assign(node.test)
-            self.visit(assignment)
+        node.test = self.extract_calls(node.test)
 
-        # store each of the elif tests in temporary variables
-        orig_node = node
-        elif_idens = []
         while True:
             else_ = node.orelse
             if len(else_) == 1 and isinstance(else_[0], _ast.If):
-                node = else_[0]
-                hascall = self.should_rewrite(node.test)
-                if hascall:
-                    iden, assignment = self.to_assign(node.test)
-                    elif_idens.append(iden)
-                    self.visit(assignment)
-                else:
-                    elif_idens.append(None)
+                node.orelse[0] = self.extract_calls(node.orelse[0]) 
             else:
                 break
 
-        # set the node back to the original node, and actually create
-        # the if statement using the temporary variable name
-        node = orig_node
-        self.newline(node)
-        if ifhascall:
-            self.write('if %s:' % ifiden)
-        else:
-            self.write('if ')
-            self.visit(node.test)
-            self.write(':')
-        self.body(node.body)
-
-        # create the rest of the elifs using their temporary variable
-        # names, if they exist, and create the else statement if it
-        # exists
-        i = 0
-        while True:
-            else_ = node.orelse
-            if len(else_) == 1 and isinstance(else_[0], _ast.If):
-                node = else_[0]
-                self.newline()
-                if elif_idens[i] is not None:
-                    self.write('elif %s:' % elif_idens[i])
-                else:
-                    self.write('elif ')
-                    self.visit(node.test)
-                    self.write(':')
-                self.body(node.body)
-                i += 1
-            else:
-                self.newline()
-                self.write('else:')
-                self.body(else_)
-                break
+        super(PyStochCompiler, self).visit_If(node)
 
     def visit_With(self, node):
         """With statements are not supported at this time.
@@ -799,60 +687,14 @@ class PyStochCompiler(codegen.SourceGenerator):
         codegen.SourceCompiler#visit_Raise
 
         """
+
+        node.type = self.extract_calls(node.type)
+        if node.inst is not None:
+            node.inst = self.extract_calls(node.inst)
+        if node.tback is not None:
+            node.tback = self.extract_calls(node.tback)
         
-        # if it doesn't contain a call node, then we can just call the super
-        if not self.should_rewrite(node):
-            super(PyStochCompiler, self).visit_Raise(node)
-
-        # if the type of the raise statement has a call node, then
-        # store it in a temporary variable
-        type_hascall = self.should_rewrite(node.type)
-        if type_hascall:
-            typeiden, assignment = self.to_assign(node.type)
-            self.visit(assignment)
-
-        # if the instance of the raise statement has a call node, then
-        # store it in a temporary variable
-        if node.inst is not None:
-            inst_hascall = self.should_rewrite(node.inst)
-            if inst_hascall:
-                typeiden, assignment = self.to_assign(node.inst)
-                self.visit(assignment)
-
-        # if the traceback of the raise statement has a call node,
-        # then store it in a temporary variable
-        if node.tback is not None:
-            tback_hascall = self.should_rewrite(node.tback)
-            if tback_hascall:
-                tbackiden, assignment = self.to_assign(node.tback)
-                self.visit(assignment)
-
-        self.newline(node)
-        self.write('raise')
-        # write the type, possibly via the temporary variable it if
-        # had a call node
-        if type_hascall:
-            self.write(typeiden)
-        else:
-            self.visit(node.type)
-                
-        if node.inst is not None:
-            self.write(', ')
-            # write the instance, possibly via the temporary variable
-            # if it had a call node
-            if inst_hascall:
-                self.write(instiden)
-            else:
-                self.visit(node.inst)
-                    
-        if node.tback is not None:
-            self.write(', ')
-            # write the traceback, possibly via the temporary variable
-            # if it had a call node
-            if tback_hascall:
-                self.write(tbackiden)
-            else:
-                self.visit(node.tback)
+        super(PyStochCompiler, self).visit_Raise(node)
 
     def visit_TryExcept(self, node):
         """The superclass' visit_TryExcept method is called.
@@ -890,40 +732,19 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        # check to see if the test case has a call node, if it does,
-        # then store the test case in a temporary variable
-        test_hascall = self.should_rewrite(node.test)
-        if test_hascall:
-            testiden, assignment = self.to_assign(node.test)
-            self.visit(assignment)
-
-        # check to see if the message has a call node, if it does,
-        # then store the message in a temporary variable
+        node.test = self.extract_calls(node.test)
         if node.msg is not None:
-            msg_hascall = self.should_rewrite(node.msg)
-            if msg_hascall:
-                msgiden, assignment = self.to_assign(node.msg)
-                self.visit(assignment)
+            node.msg = self.extract_calls(node.msg)
 
-        # write the test case of the assert statement, optionally
-        # replacing it with the name of the temporary variable if
-        # there was a call node
+        # write the test case of the assert statement
         self.newline(node)
         self.write('assert ')
-        if test_hascall:
-            self.write(testiden)
-        else:
-            self.visit(node.test)
+        self.visit(node.test)
 
-        # if the message exists, then write that, optionally replacing
-        # it with the name of the temporary variable if there was a
-        # call node
+        # if the message exists, then write it too
         if node.msg is not None:
             self.write(', ')
-            if msg_hascall:
-                self.write(msgiden)
-            else:
-                self.visit(node.msg)
+            self.visit(node.msg)
 
     def visit_Import(self, node):
         """The superclass' visit_Import method is called.
