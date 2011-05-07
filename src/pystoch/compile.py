@@ -129,6 +129,16 @@ class PyStochCompiler(codegen.SourceGenerator):
         has been called.
 
         """
+
+        for i in xrange(len(self.result)):
+            if not isinstance(self.result[i], str):
+                print "Something went wrong!  Expected a string, but got %s." % type(self.result[i])
+                if i > 0:
+                    print "Previous item: %s" % repr(self.result[i-1])
+                print "This item: %s" % repr(self.result[i])
+                if i < len(self.result)-1:
+                    print "Next item: %s" % repr(self.result[i+1])
+                return ''                
         
         return ''.join(self.result)
 
@@ -325,18 +335,20 @@ class PyStochCompiler(codegen.SourceGenerator):
         node.value = value
         return iden, node
 
-    def contains_call(self, node):
-        """Checks whether or not a node (_ast.AST) contains any Call nodes.
+    def should_rewrite(self, node):
+        """Checks whether or not a node (_ast.AST) contains any Call
+        nodes or any ListComps.  If so, this indicates that the node
+        should probably be rewritten.
 
         Parameters
         ----------
         node : _ast.AST
-            The node to check for Call nodes
+            The node to check for Call/ListComp nodes
 
         Returns
         -------
         out : boolean
-            Whether or not the node contains any Call nodes
+            Whether or not the node contains any Call/ListComp nodes
 
         """
 
@@ -344,8 +356,11 @@ class PyStochCompiler(codegen.SourceGenerator):
             def visit_Call(self, node):
                 return True
 
-        cc = CallChecker()
-        return cc.visit(node)
+        class ListCompChecker(NodeChecker):
+            def visit_ListComp(self, node):
+                return True
+
+        return CallChecker().visit(node) or ListCompChecker().visit(node)
 
     def contains_return(self, node):
         """Checks whether or not a node (_ast.AST) contains any Return nodes.
@@ -368,6 +383,39 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         rc = ReturnChecker()
         return rc.visit(node)
+
+    def extract_call(self, node):
+        """Takes a node, checks to see if there are any Call nodes in
+        it, and if so, extracts the first one it finds, places it
+        inside a temporary variable, and then replaces the Call node
+        in `node` with the temporary variable.  Returns the new,
+        modified node.
+
+        Parameters
+        ----------
+        node : _ast.AST
+            The node to extract any Call nodes from
+
+        Returns
+        -------
+        out : _ast.AST
+            The modified node, with a single Call node removed
+
+        """
+
+        class ReplaceCall(ast.NodeTransformer):
+
+            def __init__(self, callback, to_assign):
+                self.callback = callback
+                self.to_assign = to_assign
+            
+            def visit_Call(self, node):
+                iden, assignment = self.to_assign(node)
+                self.callback(assignment)
+                return ast.parse(iden).body[0].value
+
+        newnode = ReplaceCall(self.visit, self.to_assign).visit(node)
+        return newnode
 
     ########### Visitor Functions ###########
 
@@ -452,7 +500,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        hascall = self.contains_call(node.value)
+        hascall = self.should_rewrite(node.value)
         if hascall:
             # store the value of the return statement in `iden`
             iden, assignment = self.to_assign(node.value)
@@ -483,7 +531,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
         
-        if self.contains_call(node):
+        if self.should_rewrite(node):
             raise UnexpectedCallException
         
         super(PyStochCompiler, self).visit_Delete(node)
@@ -496,18 +544,31 @@ class PyStochCompiler(codegen.SourceGenerator):
         calls
 
         """
+
+        iden = None
+        rw = self.should_rewrite(node.value)
         
         if isinstance(node.value, _ast.ListComp):
             iden = self.visit(node.value)
+
+            self.insert("# in assign, iden is %s" % iden)
             self.newline(node)
             for idx, target in enumerate(node.targets):
                 if idx:
                     self.write(', ')
                 self.visit(target)
             self.write(' = %s' % iden)
+            return
 
-        else:
-            super(PyStochCompiler, self).visit_Assign(node)
+        elif isinstance(node.value, _ast.Call):
+            return super(PyStochCompiler, self).visit_Assign(node)
+
+        elif rw:
+            while rw:
+                node = self.extract_call(node)
+                rw = self.should_rewrite(node.value)
+
+        return super(PyStochCompiler, self).visit_Assign(node)
 
     def visit_AugAssign(self, node):
         """TODO"""
@@ -527,13 +588,13 @@ class PyStochCompiler(codegen.SourceGenerator):
         """
         
         # if there is no call node, then we can just call super
-        if not self.contains_call(node):
+        if not self.should_rewrite(node):
             super(PyStochCompiler, self).visit_Print(node)
 
         # check if there is a call node in the destination, and if so,
         # create a temporary variable for it
         if node.dest is not None:
-            dest_hascall = self.contains_call(node.dest)
+            dest_hascall = self.should_rewrite(node.dest)
             if dest_hascall:
                 destiden, assignment = self.to_assign(node.dest)
                 self.visit(assignment)
@@ -542,7 +603,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         # temporary variables for the ones that do
         validens = []
         for value in node.values:
-            if self.contains_call(value):
+            if self.should_rewrite(value):
                 iden, assignment = self.to_assign(value)
                 validens.append(iden)
                 self.visit(assignment)
@@ -588,7 +649,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        hascall = self.contains_call(node.iter)
+        hascall = self.should_rewrite(node.iter)
         if hascall:
             # store the value of the iterator for the for loop
             iden, assignment = self.to_assign(node.iter)
@@ -609,6 +670,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         else:
             self.write(' in ')
             self.visit(node.iter)
+            self.write(':')
 
         # increment the loop stack at the end of the body
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
@@ -628,7 +690,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        hascall = self.contains_call(node.test)
+        hascall = self.should_rewrite(node.test)
         if hascall:
             # store the value of the test case for the while loop
             iden, assignment = self.to_assign(node.test)
@@ -661,7 +723,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        ifhascall = self.contains_call(node.test)
+        ifhascall = self.should_rewrite(node.test)
         if ifhascall:
             # store the if test in a temporary variable
             ifiden, assignment = self.to_assign(node.test)
@@ -674,7 +736,7 @@ class PyStochCompiler(codegen.SourceGenerator):
             else_ = node.orelse
             if len(else_) == 1 and isinstance(else_[0], _ast.If):
                 node = else_[0]
-                hascall = self.contains_call(node.test)
+                hascall = self.should_rewrite(node.test)
                 if hascall:
                     iden, assignment = self.to_assign(node.test)
                     elif_idens.append(iden)
@@ -739,12 +801,12 @@ class PyStochCompiler(codegen.SourceGenerator):
         """
         
         # if it doesn't contain a call node, then we can just call the super
-        if not self.contains_call(node):
+        if not self.should_rewrite(node):
             super(PyStochCompiler, self).visit_Raise(node)
 
         # if the type of the raise statement has a call node, then
         # store it in a temporary variable
-        type_hascall = self.contains_call(node.type)
+        type_hascall = self.should_rewrite(node.type)
         if type_hascall:
             typeiden, assignment = self.to_assign(node.type)
             self.visit(assignment)
@@ -752,7 +814,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         # if the instance of the raise statement has a call node, then
         # store it in a temporary variable
         if node.inst is not None:
-            inst_hascall = self.contains_call(node.inst)
+            inst_hascall = self.should_rewrite(node.inst)
             if inst_hascall:
                 typeiden, assignment = self.to_assign(node.inst)
                 self.visit(assignment)
@@ -760,7 +822,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         # if the traceback of the raise statement has a call node,
         # then store it in a temporary variable
         if node.tback is not None:
-            tback_hascall = self.contains_call(node.tback)
+            tback_hascall = self.should_rewrite(node.tback)
             if tback_hascall:
                 tbackiden, assignment = self.to_assign(node.tback)
                 self.visit(assignment)
@@ -830,7 +892,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # check to see if the test case has a call node, if it does,
         # then store the test case in a temporary variable
-        test_hascall = self.contains_call(node.test)
+        test_hascall = self.should_rewrite(node.test)
         if test_hascall:
             testiden, assignment = self.to_assign(node.test)
             self.visit(assignment)
@@ -838,7 +900,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         # check to see if the message has a call node, if it does,
         # then store the message in a temporary variable
         if node.msg is not None:
-            msg_hascall = self.contains_call(node.msg)
+            msg_hascall = self.should_rewrite(node.msg)
             if msg_hascall:
                 msgiden, assignment = self.to_assign(node.msg)
                 self.visit(assignment)
@@ -982,7 +1044,12 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_Yield(node)
 
     def visit_Compare(self, node):
-        super(PyStochCompiler, self).visit_Compare(node)
+        self.write('(')
+        self.visit(node.left)
+        for op, right in zip(node.ops, node.comparators):
+            self.write(' %s ' % ast.CMPOP_SYMBOLS[type(op)])
+            self.visit(right)
+        self.write(')')
 
     def visit_Call(self, node):
         super(PyStochCompiler, self).visit_Call(node)
@@ -1004,8 +1071,8 @@ class PyStochCompiler(codegen.SourceGenerator):
     def visit_Slice(self, node):
         super(PyStochCompiler, self).visit_Slice(node)
 
-    def visit_Index(self, node):
-        super(PyStochCompiler, self).visit_Index(node)
+    #def visit_Index(self, node):
+    #    super(PyStochCompiler, self).visit_Index(node)
 
     def visit_ExceptHandler(self, node):
         super(PyStochCompiler, self).visit_ExceptHandler(node)
