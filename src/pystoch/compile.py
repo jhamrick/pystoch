@@ -635,8 +635,6 @@ class PyStochCompiler(codegen.SourceGenerator):
         return value of the function, then pop the line and function
         stacks, then return the stored value.
 
-        TODO: pop the loop stack if this return happens inside a loop
-        
         """
 
         node = self.extract(node)
@@ -1140,8 +1138,6 @@ class PyStochCompiler(codegen.SourceGenerator):
         comprehensions, and additionally pop the line and function
         stacks before yielding, and then pushing them with the same
         values after returning from the yield.
-
-        TODO: pop and push loop stacks if this happens within a loop
 
         """
         
