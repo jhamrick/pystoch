@@ -991,11 +991,11 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_Lambda(node)
 
     def visit_IfExp(self, node):
-        node.body = self.extract(node.body)
-        node.test = self.extract(node.test)
-        node.orelse = self.extract(node.orelse)
-        
-        super(PyStochCompiler, self).visit_IfExp(node)
+        """IfExps are not supported at this time.
+
+        """
+
+        raise NotImplementedError, "IfExp nodes are not supported at this time."
 
     def visit_Dict(self, node):
         super(PyStochCompiler, self).visit_Dict(node)
