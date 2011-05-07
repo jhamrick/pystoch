@@ -1133,6 +1133,14 @@ class PyStochCompiler(codegen.SourceGenerator):
             ])
 
     def visit_Compare(self, node):
+        """Rewrite the Compare visitor function to deal with extraction.
+
+        """
+        
+        node.left = self.extract(node.left)
+        for right in xrange(len(node.comparators)):
+            node.comparators[right] = self.extract(node.comparators[right])
+        
         self.write('(')
         self.visit(node.left)
         for op, right in zip(node.ops, node.comparators):
