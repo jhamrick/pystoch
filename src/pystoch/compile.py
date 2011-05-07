@@ -634,9 +634,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         return value of the function, then pop the line and function
         stacks, then return the stored value.
 
-        TODO: This should somehow make sure that the line and function
-        stacks aren't popped again after the return statement.
-
+        TODO: pop the loop stack if this return happens inside a loop
+        
         """
 
         node = self.extract(node)
@@ -1095,11 +1094,43 @@ class PyStochCompiler(codegen.SourceGenerator):
         
         raise NotImplementedError, "Dictionary comprehensions are not supported at this time"
 
-    def visit_GeneratorComp(self, node):
-        super(PyStochCompiler, self).visit_GeneratorComp(node)
+    def visit_GeneratorExp(self, node):
+        """Generator expressions are not supported at this time.
+        Please use a generator function instead.
+
+        """
+
+        raise NotImplementedError, visit_GeneratorExp.__doc__
 
     def visit_Yield(self, node):
-        super(PyStochCompiler, self).visit_Yield(node)
+        """Rewrite the Yield visitor function to extract calls/list
+        comprehensions, and additionally pop the line and function
+        stacks before yielding, and then pushing them with the same
+        values after returning from the yield.
+
+        TODO: pop and push loop stacks if this happens within a loop
+
+        """
+        
+        node = self.extract(node)
+
+        lineiden = self._gen_iden(ast.parse("LINE_STACK.pop()").body[0])
+        funciden = self._gen_iden(ast.parse("FUNCTION_STACK.pop()").body[0])
+
+        # pop the line and function stacks
+        self.insert([
+            "%s = LINE_STACK.pop()" % lineiden,
+            "%s = FUNCTION_STACK.pop()" % funciden
+            ])
+
+        super(PyStochCompiler, self).newline()
+        self.write("yield ")
+        self.visit(node.value)
+
+        self.insert([
+            "FUNCTION_STACK.push('%s')" % funciden,
+            "LINE_STACK.push('%s')" % lineiden
+            ])
 
     def visit_Compare(self, node):
         self.write('(')
