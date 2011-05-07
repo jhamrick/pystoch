@@ -1183,9 +1183,22 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_Call(node)
 
     def visit_Attribute(self, node):
+        """Rewrite the Attribute visitor function to deal with extraction.
+
+        """
+        
+        node.value = self.extract(node.value)
+        
         super(PyStochCompiler, self).visit_Attribute(node)
 
     def visit_Subscript(self, node):
+        """Rewrite the Subscript visitor function to deal with extraction.
+
+        """
+
+        node.value = self.extract(node.value)
+        node.slice = self.extract(node.slice)
+        
         super(PyStochCompiler, self).visit_Subscript(node)
 
     def visit_List(self, node):
@@ -1197,12 +1210,36 @@ class PyStochCompiler(codegen.SourceGenerator):
     # 3) Misc
 
     def visit_Slice(self, node):
+        """Rewrite the Slice visitor function to deal with extraction.
+
+        """
+
+        if node.lower is not None:
+            node.lower = self.extract(node.lower)
+        if node.upper is not None:
+            node.upper = self.extract(node.upper)
+        if node.step is not None:
+            node.step = self.extract(node.step)
+            
         super(PyStochCompiler, self).visit_Slice(node)
 
-    #def visit_Index(self, node):
-    #    super(PyStochCompiler, self).visit_Index(node)
+    def visit_Index(self, node):
+        """Rewrite the Index visitor function to deal with extraction.
+
+        """
+
+        node.value = self.extract(node.value)
+        self.visit(node.value)
 
     def visit_ExceptHandler(self, node):
+        """The superclass' visit_ExceptHandler method is called.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_ExceptHandler
+
+        """
+
         super(PyStochCompiler, self).visit_ExceptHandler(node)
 
 if __name__ == "__main__":
