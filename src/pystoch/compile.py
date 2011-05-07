@@ -278,6 +278,23 @@ class PyStochCompiler(codegen.SourceGenerator):
             self.body(node.orelse)
 
     def to_assign(self, value):
+        """Takes a value, creates a random temporary identifier for
+        it, and creates an Assign node, assigning the value to the
+        identifier.
+
+        Parameters
+        ----------
+        value : ast.AST
+            node that is to be the value of the Assign node
+
+        Returns
+        -------
+        out : tuple of string, _ast.Assign
+            the string is the identifier of the node, and the
+            _ast.Assign is the node that was created
+
+        """
+        
         iden = self._gen_iden(value)
         node = _ast.Assign()
         node.targets = [ast.parse(iden).body[0].value]
@@ -285,6 +302,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         return iden, node
 
     ########### Visitor Functions ###########
+
+    # 1) Statements
 
     def visit_FunctionDef(self, node):
         """Rewrite the FunctionDef visitor to push a new value onto
@@ -385,7 +404,51 @@ class PyStochCompiler(codegen.SourceGenerator):
             "FUNCTION_STACK.pop()",
             "return %s" % iden
             ])
+
+    def visit_Delete(self, node):
+        super(PyStochCompiler, self).visit_Delete(node)
         
+    def visit_Assign(self, node):
+        """Rewrite the Assign visitor function to deal with list
+        comprehensions.
+
+        TODO: this should also deal with compound and nested function
+        calls
+
+        """
+        
+        if isinstance(node.value, _ast.ListComp):
+            iden = self.visit(node.value)
+            self.newline(node)
+            for idx, target in enumerate(node.targets):
+                if idx:
+                    self.write(', ')
+                self.visit(target)
+            self.write(' = %s' % iden)
+
+        else:
+            super(PyStochCompiler, self).visit_Assign(node)
+
+    def visit_AugAssign(self, node):
+        raise NotImplementedError
+        
+    def visit_Print(self, node):
+        # XXX: python 2.6 only
+        self.newline(node)
+        self.write('print ')
+        want_comma = False
+        if node.dest is not None:
+            self.write(' >> ')
+            self.visit(node.dest)
+            want_comma = True
+        for value in node.values:
+            if want_comma:
+                self.write(', ')
+            self.visit(value)
+            want_comma = True
+        if not node.nl:
+            self.write(',')
+
     def visit_For(self, node):
         """Rewrite the For visitor function to first store the
         iterator of the for loop in a temporary variable, and then to
@@ -446,59 +509,6 @@ class PyStochCompiler(codegen.SourceGenerator):
         # and finally, pop the loop stack at the end of the body
         self.insert("LOOP_STACK.pop()")
 
-    def visit_ListComp(self, node):
-        """Rewrite the ListComp visitor function to turn the list
-        comprehension into a real for loop.  This is necessary to be
-        able to correctly label any random functions that get called
-        from within the list comprehension.  Basically, this function
-        creates a temporary variable for the list, and transforms the
-        comprehension into a for loop that appends values onto this
-        list.  The list name is then returned, so that whatever
-        element called the for loop can handle the assignment
-        properly.
-
-        """
-        
-        # make an identifier for the list
-        self.newline(node)
-        iden = self._gen_iden(node)
-        self.write("%s = []" % iden)
-        elt = node.elt
-
-        def parse_generator(nodes):
-            """Transform the generator into a for loop.
-
-            """
-            
-            node = nodes[-1]
-            tempnode = ast.For()
-            tempnode.target = node.target
-            tempnode.iter = node.iter
-            # TODO: deal with ifs here...
-            if len(nodes) == 1:
-                iden2, assignment = self.to_assign(elt)
-                body = [assignment, 
-                        ast.parse("%s.append(%s)" % (iden, iden2))]
-            else:
-                body = [parse_generator(nodes[:-1])]
-                
-            tempnode.body = body
-            tempnode.orelse = None
-            return tempnode
-
-        # visit the for loop
-        self.visit(parse_generator(node.generators))
-
-        # return the identifier of the list we created
-        return iden
-            
-    def visit_DictComp(self, node):
-        """Dictionary comprehensions are not supported at this time.
-
-        """
-        
-        raise NotImplementedError, "Dictionary comprehensions are not supported at this time"
-
     def visit_If(self, node):
         """Rewrite the If visitor function to assign the if and elif
         tests to temporary variables, and then check these variables
@@ -548,26 +558,148 @@ class PyStochCompiler(codegen.SourceGenerator):
                 self.body(else_)
                 break
 
-    def visit_Assign(self, node):
-        """Rewrite the Assign visitor function to deal with list
-        comprehensions.
+    def visit_With(self, node):
+        raise NotImplementedError
 
-        TODO: this should also deal with compound and nested function
-        calls
+    def visit_Raise(self, node):
+        raise NotImplementedError
+
+    def visit_TryExcept(self, node):
+        raise NotImplementedError
+
+    def visit_TryFinally(self, node):
+        raise NotImplementedError
+
+    def visit_Assert(self, node):
+        raise NotImplementedError
+
+    def visit_Import(self, node):
+        super(PyStochCompiler, self).visit_Import(node)
+
+    def visit_ImportFrom(self, node):
+        super(PyStochCompiler, self).visit_ImportFrom(node)
+
+    def visit_Exec(self, node):
+        """Exec statements are not supported at this time.
 
         """
         
-        if isinstance(node.value, _ast.ListComp):
-            iden = self.visit(node.value)
-            self.newline(node)
-            for idx, target in enumerate(node.targets):
-                if idx:
-                    self.write(', ')
-                self.visit(target)
-            self.write(' = %s' % iden)
+        raise NotImplementedError, "Exec statements are not supported at this time"
 
-        else:
-            super(PyStochCompiler, self).visit_Assign(node)
+    # 2) Expressions
+
+    def visit_BoolOp(self, node):
+        raise NotImplementedError
+
+    def visit_BinOp(self, node):
+        raise NotImplementedError
+
+    def visit_UnaryOp(self, node):
+        raise NotImplementedError
+
+    def visit_Lambda(self, node):
+        raise NotImplementedError
+
+    def visit_IfExp(self, node):
+        raise NotImplementedError
+
+    def visit_Dict(self, node):
+        raise NotImplementedError
+
+    def visit_Set(self, node):
+        raise NotImplementedError
+
+    def visit_ListComp(self, node):
+        """Rewrite the ListComp visitor function to turn the list
+        comprehension into a real for loop.  This is necessary to be
+        able to correctly label any random functions that get called
+        from within the list comprehension.  Basically, this function
+        creates a temporary variable for the list, and transforms the
+        comprehension into a for loop that appends values onto this
+        list.  The list name is then returned, so that whatever
+        element called the for loop can handle the assignment
+        properly.
+
+        """
+        
+        # make an identifier for the list
+        self.newline(node)
+        iden = self._gen_iden(node)
+        self.write("%s = []" % iden)
+        elt = node.elt
+
+        def parse_generator(nodes):
+            """Transform the generator into a for loop.
+
+            """
+            
+            node = nodes[-1]
+            tempnode = ast.For()
+            tempnode.target = node.target
+            tempnode.iter = node.iter
+            # TODO: deal with ifs here...
+            if len(nodes) == 1:
+                iden2, assignment = self.to_assign(elt)
+                body = [assignment, 
+                        ast.parse("%s.append(%s)" % (iden, iden2))]
+            else:
+                body = [parse_generator(nodes[:-1])]
+                
+            tempnode.body = body
+            tempnode.orelse = None
+            return tempnode
+
+        # visit the for loop
+        self.visit(parse_generator(node.generators))
+
+        # return the identifier of the list we created
+        return iden
+            
+    def visit_SetComp(self, node):
+        """Set comprehensions are not supported at this time.
+
+        """
+
+        raise NotImplementedError, "Set comprehensions are not supported at this time"
+
+    def visit_DictComp(self, node):
+        """Dictionary comprehensions are not supported at this time.
+
+        """
+        
+        raise NotImplementedError, "Dictionary comprehensions are not supported at this time"
+
+    def visit_GeneratorComp(self, node):
+        raise NotImplementedError
+
+    def visit_Yield(self, node):
+        raise NotImplementedError
+
+    def visit_Compare(self, node):
+        raise NotImplementedError
+
+    def visit_Call(self, node):
+        raise NotImplementedError
+
+    def visit_Attribute(self, node):
+        raise NotImplementedError
+
+    def visit_Subscript(self, node):
+        raise NotImplementedError
+
+    def visit_List(self, node):
+        raise NotImplementedError
+
+    def visit_Tuple(self, node):
+        raise NotImplementedError
+
+    # 3) Misc
+
+    def visit_Slice(self, node):
+        raise NotImplementedError
+
+    def visit_Index(self, node):
+        raise NotImplementedError
 
 if __name__ == "__main__":
     # TODO: this should do some real argument parsing
