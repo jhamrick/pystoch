@@ -779,13 +779,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         """
 
         node.test = self.extract(node.test)
-
-        while True:
-            else_ = node.orelse
-            if len(else_) == 1 and isinstance(else_[0], _ast.If):
-                node.orelse[0] = self.extract(node.orelse[0]) 
-            else:
-                break
+        for i in xrange(len(node.orelse)):
+            node.orelse[i] = self.extract(node.orelse[i], threshold=0)
 
         self.newline(node)
         self.write('if ')
