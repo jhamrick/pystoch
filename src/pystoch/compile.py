@@ -46,6 +46,20 @@ class UnexpectedCallException(Exception):
     def __str__(self):
         return repr(self.value)
 
+class NodeChecker(ast.NodeVisitor):
+    def generic_visit(self, node):
+        for field, value in ast.iter_fields(node):
+            if isinstance(value, list):
+                for item in value:
+                    if isinstance(item, _ast.AST):
+                        if self.visit(item):
+                            return True
+            elif isinstance(value, _ast.AST):
+                if self.visit(value):
+                    return True
+
+        return False
+
 class PyStochCompiler(codegen.SourceGenerator):
     """A visitor class to transform a python abstract syntax tree into
     pystoch.
@@ -326,36 +340,34 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        def iter_fields(node):
-            """Iterate over all fields of a node, only yielding
-            existing fields.
-
-            """
-            for field in node._fields:
-                try:
-                    yield field, getattr(node, field)
-                except AttributeError:
-                    pass
-
-        class CallChecker(ast.NodeVisitor):
+        class CallChecker(NodeChecker):
             def visit_Call(self, node):
                 return True
 
-            def generic_visit(self, node):
-                for field, value in iter_fields(node):
-                    if isinstance(value, list):
-                        for item in value:
-                            if isinstance(item, _ast.AST):
-                                if self.visit(item):
-                                    return True
-                    elif isinstance(value, _ast.AST):
-                        if self.visit(value):
-                            return True
-
-                return False
-
         cc = CallChecker()
         return cc.visit(node)
+
+    def contains_return(self, node):
+        """Checks whether or not a node (_ast.AST) contains any Return nodes.
+
+        Parameters
+        ----------
+        node : _ast.AST
+            The node to check for Return nodes
+
+        Returns
+        -------
+        out : boolean
+            Whether or not the node contains any Return nodes
+
+        """
+
+        class ReturnChecker(NodeChecker):
+            def visit_Return(self, node):
+                return True
+
+        rc = ReturnChecker()
+        return rc.visit(node)
 
     ########### Visitor Functions ###########
 
@@ -380,10 +392,15 @@ class PyStochCompiler(codegen.SourceGenerator):
             "LINE_STACK.push(0)"
             ]
 
-        write_after = [
-            "LINE_STACK.pop()",
-            "FUNCTION_STACK.pop()"
-            ]
+        # only pop the line and function stacks if there is no return
+        # statement
+        if self.contains_return(node):
+            write_after = None
+        else:
+            write_after = [
+                "LINE_STACK.pop()",
+                "FUNCTION_STACK.pop()"
+                ]
 
         self.body(node.body, write_before=write_before, write_after=write_after)
 
