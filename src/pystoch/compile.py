@@ -439,17 +439,25 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        # store the value of the return statement in `iden`
-        iden, assignment = self.to_assign(node.value)
-        self.visit(assignment)
+        hascall = self.contains_call(node.value)
+        if hascall:
+            # store the value of the return statement in `iden`
+            iden, assignment = self.to_assign(node.value)
+            self.visit(assignment)
 
         # pop the line and function stacks, then return the stored
         # value
         self.insert([
             "LINE_STACK.pop()",
-            "FUNCTION_STACK.pop()",
-            "return %s" % iden
+            "FUNCTION_STACK.pop()"
             ])
+
+        if hascall:
+            self.insert("return %s" % iden)
+        else:
+            super(PyStochCompiler, self).newline()
+            self.write("return ")
+            self.visit(node.value)
 
     def visit_Delete(self, node):
         super(PyStochCompiler, self).visit_Delete(node)
@@ -476,7 +484,7 @@ class PyStochCompiler(codegen.SourceGenerator):
             super(PyStochCompiler, self).visit_Assign(node)
 
     def visit_AugAssign(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_AugAssign(node)
         
     def visit_Print(self, node):
         # XXX: python 2.6 only
@@ -504,10 +512,12 @@ class PyStochCompiler(codegen.SourceGenerator):
         value after the loop has terminated.
 
         """
-        
-        # store the value of the iterator for the for loop
-        iden, assignment = self.to_assign(node.iter)
-        self.visit(assignment)
+
+        hascall = self.contains_call(node.iter)
+        if hascall:
+            # store the value of the iterator for the for loop
+            iden, assignment = self.to_assign(node.iter)
+            self.visit(assignment)
 
         # push a new value onto the loop stack
         self.newline(node)
@@ -518,7 +528,12 @@ class PyStochCompiler(codegen.SourceGenerator):
         # iterate over the stored value for the for loop iterator
         self.write('for ')
         self.visit(node.target)
-        self.write(' in %s:' % iden)
+
+        if hascall:
+            self.write(' in %s:' % iden)
+        else:
+            self.write(' in ')
+            self.visit(node.iter)
 
         # increment the loop stack at the end of the body
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
@@ -536,9 +551,11 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        # store the value of the test case for the while loop
-        iden, assignment = self.to_assign(node.test)
-        self.visit(assignment)
+        hascall = self.contains_call(node.test)
+        if hascall:
+            # store the value of the test case for the while loop
+            iden, assignment = self.to_assign(node.test)
+            self.visit(assignment)
 
         # push a new value onto the loop stack
         self.newline(node)
@@ -546,8 +563,13 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.insert(["LOOP_STACK.push(0)"])
         super(PyStochCompiler, self).newline()
 
-        # iterate over the stored test case
-        self.write('while %s:' % iden)
+        if hascall:
+            # iterate over the stored test case
+            self.write('while %s:' % iden)
+        else:
+            self.write('while ')
+            self.visit(node.test)
+            self.write(':')
 
         # increment the loop stack at the end of the body
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
@@ -562,9 +584,11 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        # store the if test in a temporary variable
-        ifiden, assignment = self.to_assign(node.test)
-        self.visit(assignment)
+        ifhascall = self.contains_call(node.test)
+        if ifhascall:
+            # store the if test in a temporary variable
+            ifiden, assignment = self.to_assign(node.test)
+            self.visit(assignment)
 
         # store each of the elif tests in temporary variables
         orig_node = node
@@ -573,9 +597,13 @@ class PyStochCompiler(codegen.SourceGenerator):
             else_ = node.orelse
             if len(else_) == 1 and isinstance(else_[0], _ast.If):
                 node = else_[0]
-                iden, assignment = self.to_assign(node.test)
-                elif_idens.append(iden)
-                self.visit(assignment)
+                hascall = self.contains_call(node.test)
+                if hascall:
+                    iden, assignment = self.to_assign(node.test)
+                    elif_idens.append(iden)
+                    self.visit(assignment)
+                else:
+                    elif_idens.append(None)
             else:
                 break
 
@@ -583,7 +611,12 @@ class PyStochCompiler(codegen.SourceGenerator):
         # the if statement using the temporary variable name
         node = orig_node
         self.newline(node)
-        self.write('if %s:' % ifiden)
+        if ifhascall:
+            self.write('if %s:' % ifiden)
+        else:
+            self.write('if ')
+            self.visit(node.test)
+            self.write(':')
         self.body(node.body)
 
         # create the rest of the elifs using their temporary variable
@@ -595,7 +628,12 @@ class PyStochCompiler(codegen.SourceGenerator):
             if len(else_) == 1 and isinstance(else_[0], _ast.If):
                 node = else_[0]
                 self.newline()
-                self.write('elif %s:' % elif_idens[i])
+                if elif_idens[i] is not None:
+                    self.write('elif %s:' % elif_idens[i])
+                else:
+                    self.write('elif ')
+                    self.visit(node.test)
+                    self.write(':')
                 self.body(node.body)
                 i += 1
             else:
@@ -605,19 +643,19 @@ class PyStochCompiler(codegen.SourceGenerator):
                 break
 
     def visit_With(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_With(node)
 
     def visit_Raise(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Raise(node)
 
     def visit_TryExcept(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_TryExcept(node)
 
     def visit_TryFinally(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_TryFinally(node)
 
     def visit_Assert(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Assert(node)
 
     def visit_Import(self, node):
         super(PyStochCompiler, self).visit_Import(node)
@@ -635,25 +673,25 @@ class PyStochCompiler(codegen.SourceGenerator):
     # 2) Expressions
 
     def visit_BoolOp(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_BoolOp(node)
 
     def visit_BinOp(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_BinOp(node)
 
     def visit_UnaryOp(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_UnaryOp(node)
 
     def visit_Lambda(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Lambda(node)
 
     def visit_IfExp(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_IfExp(node)
 
     def visit_Dict(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Dict(node)
 
     def visit_Set(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Set(node)
 
     def visit_ListComp(self, node):
         """Rewrite the ListComp visitor function to turn the list
@@ -716,36 +754,36 @@ class PyStochCompiler(codegen.SourceGenerator):
         raise NotImplementedError, "Dictionary comprehensions are not supported at this time"
 
     def visit_GeneratorComp(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_GeneratorComp(node)
 
     def visit_Yield(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Yield(node)
 
     def visit_Compare(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Compare(node)
 
     def visit_Call(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Call(node)
 
     def visit_Attribute(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Attribute(node)
 
     def visit_Subscript(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Subscript(node)
 
     def visit_List(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_List(node)
 
     def visit_Tuple(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Tuple(node)
 
     # 3) Misc
 
     def visit_Slice(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Slice(node)
 
     def visit_Index(self, node):
-        raise NotImplementedError
+        super(PyStochCompiler, self).visit_Index(node)
 
 if __name__ == "__main__":
     # TODO: this should do some real argument parsing
