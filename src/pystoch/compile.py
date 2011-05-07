@@ -15,6 +15,9 @@ import os
 import pdb
 import sys
 
+if sys.version_info[:2] != (2, 6):
+    raise NotImplementedError, "PyStoch currently only supports Python 2.6"
+
 def pystoch_compile(source):
     """Compile python to pystoch.
 
@@ -35,6 +38,13 @@ def pystoch_compile(source):
     generator = PyStochCompiler()
     generator.compile(source)
     return generator.source
+
+class UnexpectedCallException(Exception):
+    def __init__(self):
+        self.value = "Detected a Call node when I expected none!  This is probably the fault of PyStoch."
+
+    def __str__(self):
+        return repr(self.value)
 
 class PyStochCompiler(codegen.SourceGenerator):
     """A visitor class to transform a python abstract syntax tree into
@@ -399,20 +409,6 @@ class PyStochCompiler(codegen.SourceGenerator):
         for base in node.bases:
             paren_or_comma()
             self.visit(base)
-
-        if hasattr(node, 'keywords'):
-            for keyword in node.keywords:
-                paren_or_comma()
-                self.write(keyword.arg + '=')
-                self.visit(keyword.value)
-            if node.starargs is not None:
-                paren_or_comma()
-                self.write('*')
-                self.visit(node.starargs)
-            if node.kwargs is not None:
-                paren_or_comma()
-                self.write('**')
-                self.visit(node.kwargs)
         self.write(have_args and '):' or ':')
 
         write_before = [
@@ -460,6 +456,9 @@ class PyStochCompiler(codegen.SourceGenerator):
             self.visit(node.value)
 
     def visit_Delete(self, node):
+        if self.contains_call(node):
+            raise UnexpectedCallException
+        
         super(PyStochCompiler, self).visit_Delete(node)
         
     def visit_Assign(self, node):
@@ -487,19 +486,60 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_AugAssign(node)
         
     def visit_Print(self, node):
-        # XXX: python 2.6 only
+        """Rewrite the Print visitor function to deal with possible
+        Call nodes.  Any children with Call nodes are stored in
+        temporary variables, and then the temporary variable is used
+        in the actual print statement.
+
+        """
+        
+        # if there is no call node, then we can just call super
+        if not self.contains_call(node):
+            super(PyStochCompiler, self).visit_Print(node)
+
+        # check if there is a call node in the destination, and if so,
+        # create a temporary variable for it
+        if node.dest is not None:
+            dest_hascall = self.contains_call(node.dest)
+            if dest_hascall:
+                destiden, assignment = self.to_assign(node.dest)
+                self.visit(assignment)
+
+        # check the values if they have call nodes, and if so, create
+        # temporary variables for the ones that do
+        validens = []
+        for value in node.values:
+            if self.contains_call(value):
+                iden, assignment = self.to_assign(value)
+                validens.append(iden)
+                self.visit(assignment)
+            else:
+                validens.append(None)
+            
         self.newline(node)
         self.write('print ')
         want_comma = False
         if node.dest is not None:
             self.write(' >> ')
-            self.visit(node.dest)
+            # write the destination, using the temporary variable if
+            # it had a call node
+            if dest_hascall:
+                self.write(destiden)
+            else:
+                self.visit(node.dest)
             want_comma = True
-        for value in node.values:
+            
+        for value, iden in zip(node.values, validens):
             if want_comma:
                 self.write(', ')
-            self.visit(value)
+            # write the value, using the temporary variable if it had
+            # a call node
+            if iden is not None:
+                self.write(iden)
+            else:
+                self.visit(value)
             want_comma = True
+            
         if not node.nl:
             self.write(',')
 
@@ -510,6 +550,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         new value onto the loop stack before entering the for loop,
         increment that value after each pass of the loop, and pop the
         value after the loop has terminated.
+
+        TODO: needs to handle orelse statements
 
         """
 
@@ -548,6 +590,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         value onto the loop stack before entering the while loop,
         increment that value after each pass of the loop, and pop the
         value after the loop has terminated.
+
+        TODO: needs to handle orelse statements
 
         """
 
@@ -643,10 +687,73 @@ class PyStochCompiler(codegen.SourceGenerator):
                 break
 
     def visit_With(self, node):
-        super(PyStochCompiler, self).visit_With(node)
+        """With statements are not supported at this time.
+
+        """
+
+        raise NotImplementedError, "With statements are not supported at this time"
 
     def visit_Raise(self, node):
-        super(PyStochCompiler, self).visit_Raise(node)
+        """Rewrite the Raise visitor function to deal with potential
+        Call nodes.  Any children with Call nodes are stored in
+        temporary variables, and then the variable is used in the
+        actual raise statement.
+
+        """
+        
+        # if it doesn't contain a call node, then we can just call the super
+        if not self.contains_call(node):
+            super(PyStochCompiler, self).visit_Raise(node)
+
+        # if the type of the raise statement has a call node, then
+        # store it in a temporary variable
+        type_hascall = self.contains_call(node.type)
+        if type_hascall:
+            typeiden, assignment = self.to_assign(node.type)
+            self.visit(assignment)
+
+        # if the instance of the raise statement has a call node, then
+        # store it in a temporary variable
+        if node.inst is not None:
+            inst_hascall = self.contains_call(node.inst)
+            if inst_hascall:
+                typeiden, assignment = self.to_assign(node.inst)
+                self.visit(assignment)
+
+        # if the traceback of the raise statement has a call node,
+        # then store it in a temporary variable
+        if node.tback is not None:
+            tback_hascall = self.contains_call(node.tback)
+            if tback_hascall:
+                tbackiden, assignment = self.to_assign(node.tback)
+                self.visit(assignment)
+
+        self.newline(node)
+        self.write('raise')
+        # write the type, possibly via the temporary variable it if
+        # had a call node
+        if type_hascall:
+            self.write(typeiden)
+        else:
+            self.visit(node.type)
+                
+        if node.inst is not None:
+            self.write(', ')
+            # write the instance, possibly via the temporary variable
+            # if it had a call node
+            if inst_hascall:
+                self.write(instiden)
+            else:
+                self.visit(node.inst)
+                    
+        if node.tback is not None:
+            self.write(', ')
+            # write the traceback, possibly via the temporary variable
+            # if it had a call node
+            if tback_hascall:
+                self.write(tbackiden)
+            else:
+                self.visit(node.tback)
 
     def visit_TryExcept(self, node):
         super(PyStochCompiler, self).visit_TryExcept(node)
