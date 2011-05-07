@@ -686,6 +686,9 @@ class PyStochCompiler(codegen.SourceGenerator):
             node = ast.Assign(
                 value = ast.parse(iden).body[0].value,
                 targets = node.targets)
+
+        elif isinstance(node.value, _ast.Dict):
+            node.value = self.extract(node.value, threshold=0)
         
         return super(PyStochCompiler, self).visit_Assign(node)
 
@@ -997,10 +1000,24 @@ class PyStochCompiler(codegen.SourceGenerator):
         raise NotImplementedError, "IfExp nodes are not supported at this time."
 
     def visit_Dict(self, node):
+        """Rewrite the Dict visitor function to extract any list
+        comprehensions or calls out of the keys or values.
+
+        """
+        
+        for k in xrange(len(node.keys)):
+            node.keys[k] = self.extract(node.keys[k], threshold=0)
+        for v in xrange(len(node.values)):
+            node.values[v] = self.extract(node.values[v], threshold=0)
+        
         super(PyStochCompiler, self).visit_Dict(node)
 
     def visit_Set(self, node):
-        super(PyStochCompiler, self).visit_Set(node)
+        """Set nodes are not supported at this time.
+
+        """
+
+        raise NotImplementedError, "Set nodes are not supported at this time"
 
     def visit_ListComp(self, node):
         """Rewrite the ListComp visitor function to turn the list
