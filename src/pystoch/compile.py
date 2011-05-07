@@ -686,7 +686,9 @@ class PyStochCompiler(codegen.SourceGenerator):
                 value = ast.parse(iden).body[0].value,
                 targets = node.targets)
 
-        elif isinstance(node.value, _ast.Dict):
+        elif isinstance(node.value, _ast.Dict) or \
+                 isinstance(node.value, _ast.List) or \
+                 isinstance(node.value, _ast.Tuple):
             node.value = self.extract(node.value, threshold=0)
         
         return super(PyStochCompiler, self).visit_Assign(node)
@@ -1202,9 +1204,25 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_Subscript(node)
 
     def visit_List(self, node):
+        """Rewrite the List visitor function to extract any list
+        comprehensions or calls out of the keys or values.
+
+        """
+
+        for elt in xrange(len(node.elts)):
+            node.elts[elt] = self.extract(node.elts[elt], threshold=0)
+        
         super(PyStochCompiler, self).visit_List(node)
 
     def visit_Tuple(self, node):
+        """Rewrite the Tuple visitor function to extract any list
+        comprehensions or calls out of the keys or values.
+
+        """
+
+        for elt in xrange(len(node.elts)):
+            node.elts[elt] = self.extract(node.elts[elt], threshold=0)
+        
         super(PyStochCompiler, self).visit_Tuple(node)
 
     # 3) Misc
