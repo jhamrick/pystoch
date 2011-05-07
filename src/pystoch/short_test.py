@@ -22,6 +22,6 @@ class ShortTest(RejectionQuery):
         return self.b
 
 query = ShortTest()
-samples = [query.sample() for x in range(100)]
+samples = [query.run() for x in range(100)]
 
 print np.mean(samples)

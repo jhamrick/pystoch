@@ -1,9 +1,27 @@
 import argparse
-import compile
+import compile as c
+from stack import Stack
+import sys
 
-def parse(program, args):
-    source = open(program, 'r').read()
-    walk(ast.parse(source))
+class PyStochObj(object):
+
+    def __init__(self):
+        self.module_stack = Stack()
+        self.class_stack = Stack()
+        self.func_stack = Stack()
+        self.line_stack = Stack()
+        self.loop_stack = Stack()
+        
+def run(prog, args):
+    PYSTOCHOBJ = PyStochObj()
+    
+    sys.argv = args
+    if prog.endswith('.pystoch'):
+        execfile(prog)
+    else:
+        source = c.pystoch_compile(prog)
+        print source
+        exec(source)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run a PyStoch program.')
@@ -13,5 +31,5 @@ if __name__ == "__main__":
                         help='arguments to the PyStoch program')
 
     args = parser.parse_args()
-    parse(args.program[0], args.arguments)
+    run(args.program[0], args.arguments)
     

@@ -205,8 +205,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         # line stack.
         iden = self._gen_iden(node)
         self.insert([
-            "MODULE_STACK.push('%s')" % iden,
-            "LINE_STACK.push(0)",
+            "PYSTOCHOBJ.module_stack.push('%s')" % iden,
+            "PYSTOCHOBJ.line_stack.push(0)",
             ""
             ])
 
@@ -215,8 +215,8 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # and finally, pop the line and module stacks
         self.insert([
-            "LINE_STACK.pop()",
-            "MODULE_STACK.pop()",
+            "PYSTOCHOBJ.line_stack.pop()",
+            "PYSTOCHOBJ.module_stack.pop()",
             ""])
 
     def newline(self, node=None, extra=0):
@@ -250,7 +250,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # otherwise, incremet the line stack and then insert another
         # newline
-        self.write("LINE_STACK.increment()")
+        self.write("PYSTOCHOBJ.line_stack.increment()")
         super(PyStochCompiler, self).newline(node=node, extra=extra)
 
     def body(self, statements, write_before=None, write_after=None):
@@ -572,12 +572,13 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.decorators(node)
         self.newline(node)
         self.write('def %s(' % node.name)
+        node.args.args.append(ast.parse('PYSTOCHOBJ').body[0].value)
         self.signature(node.args)
         self.write('):')
 
         write_before = [
-            "FUNCTION_STACK.push('%s')" % self._gen_iden(node),
-            "LINE_STACK.push(0)"
+            "PYSTOCHOBJ.func_stack.push('%s')" % self._gen_iden(node),
+            "PYSTOCHOBJ.line_stack.push(0)"
             ]
 
         # only pop the line and function stacks if there is no return
@@ -586,8 +587,8 @@ class PyStochCompiler(codegen.SourceGenerator):
             write_after = None
         else:
             write_after = [
-                "LINE_STACK.pop()",
-                "FUNCTION_STACK.pop()"
+                "PYSTOCHOBJ.line_stack.pop()",
+                "PYSTOCHOBJ.func_stack.pop()"
                 ]
 
         self.body(node.body, write_before=write_before, write_after=write_after)
@@ -617,14 +618,14 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.write(have_args and '):' or ':')
 
         write_before = [
-            "CLASS_STACK.push('%s')" % self._gen_iden(node),
-            "LINE_STACK.push(0)"
+            "PYSTOCHOBJ.class_stack.push('%s')" % self._gen_iden(node),
+            "PYSTOCHOBJ.line_stack.push(0)"
             ]
 
         write_after = [
             "",
-            'LINE_STACK.pop()',
-            'CLASS_STACK.pop()',
+            'PYSTOCHOBJ.line_stack.pop()',
+            'PYSTOCHOBJ.class_stack.pop()',
             ""
             ]
         
@@ -642,14 +643,14 @@ class PyStochCompiler(codegen.SourceGenerator):
         # pop the line and function stacks
         if self.inloop:
             self.insert([
-                "LINE_STACK.pop()",
-                "LOOP_STACK.pop()",
-                "FUNCTION_STACK.pop()"
+                "PYSTOCHOBJ.line_stack.pop()",
+                "PYSTOCHOBJ.loop_stack.pop()",
+                "PYSTOCHOBJ.func_stack.pop()"
                 ])
         else:
             self.insert([
-                "LINE_STACK.pop()",
-                "FUNCTION_STACK.pop()"
+                "PYSTOCHOBJ.line_stack.pop()",
+                "PYSTOCHOBJ.func_stack.pop()"
                 ])
 
         super(PyStochCompiler, self).newline()
@@ -754,7 +755,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         # push a new value onto the loop stack
         self.newline(node)
         super(PyStochCompiler, self).newline()
-        self.insert(["LOOP_STACK.push(0)"])
+        self.insert(["PYSTOCHOBJ.loop_stack.push(0)"])
         super(PyStochCompiler, self).newline()
 
         # iterate over the stored value for the for loop iterator
@@ -767,11 +768,11 @@ class PyStochCompiler(codegen.SourceGenerator):
         # increment the loop stack at the end of the body
         inloop = self.inloop
         self.inloop = True
-        self.body_or_else(node, write_before="LOOP_STACK.increment()")
+        self.body_or_else(node, write_before="PYSTOCHOBJ.loop_stack.increment()")
         self.inloop = inloop
         
         # and finally, pop the loop stack after the for loop is over
-        self.insert("LOOP_STACK.pop()")
+        self.insert("PYSTOCHOBJ.loop_stack.pop()")
 
     def visit_While(self, node):
         """Rewrite the While visitor function to first store the test
@@ -788,7 +789,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         # push a new value onto the loop stack
         self.newline(node)
         super(PyStochCompiler, self).newline()
-        self.insert(["LOOP_STACK.push(0)"])
+        self.insert(["PYSTOCHOBJ.loop_stack.push(0)"])
         super(PyStochCompiler, self).newline()
 
         self.write('while ')
@@ -798,11 +799,11 @@ class PyStochCompiler(codegen.SourceGenerator):
         # increment the loop stack at the end of the body
         inloop = self.inloop
         self.inloop = True
-        self.body_or_else(node, write_before="LOOP_STACK.increment()")
+        self.body_or_else(node, write_before="PYSTOCHOBJ.loop_stack.increment()")
         self.inloop = inloop
 
         # and finally, pop the loop stack at the end of the body
-        self.insert("LOOP_STACK.pop()")
+        self.insert("PYSTOCHOBJ.loop_stack.pop()")
 
     def visit_If(self, node):
         """Rewrite the If visitor function to assign the if and elif
@@ -1143,23 +1144,23 @@ class PyStochCompiler(codegen.SourceGenerator):
         
         node = self.extract(node)
 
-        lineiden = self._gen_iden(ast.parse("LINE_STACK.pop()").body[0])
-        funciden = self._gen_iden(ast.parse("FUNCTION_STACK.pop()").body[0])
+        lineiden = self._gen_iden(ast.parse("PYSTOCHOBJ.line_stack.pop()").body[0])
+        funciden = self._gen_iden(ast.parse("PYSTOCHOBJ.func_stack.pop()").body[0])
 
         if self.inloop:
-            loopiden = self._gen_iden(ast.parse("LOOP_STACK.pop()").body[0])
+            loopiden = self._gen_iden(ast.parse("PYSTOCHOBJ.loop_stack.pop()").body[0])
 
         # pop the line and function stacks
         if self.inloop:
             self.insert([
-                "%s = LINE_STACK.pop()" % lineiden,
-                "%s = LOOP_STACK.pop()" % loopiden,
-                "%s = FUNCTION_STACK.pop()" % funciden
+                "%s = PYSTOCHOBJ.line_stack.pop()" % lineiden,
+                "%s = PYSTOCHOBJ.loop_stack.pop()" % loopiden,
+                "%s = PYSTOCHOBJ.func_stack.pop()" % funciden
                 ])
         else:
             self.insert([
-                "%s = LINE_STACK.pop()" % lineiden,
-                "%s = FUNCTION_STACK.pop()" % funciden
+                "%s = PYSTOCHOBJ.line_stack.pop()" % lineiden,
+                "%s = PYSTOCHOBJ.func_stack.pop()" % funciden
                 ])
 
 
@@ -1170,14 +1171,14 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         if self.inloop:
             self.insert([
-                "FUNCTION_STACK.push('%s')" % funciden,
-                "LOOP_STACK.push('%s')" % loopiden,
-                "LINE_STACK.push('%s')" % lineiden
+                "PYSTOCHOBJ.func_stack.push('%s')" % funciden,
+                "PYSTOCHOBJ.loop_stack.push('%s')" % loopiden,
+                "PYSTOCHOBJ.line_stack.push('%s')" % lineiden
                 ])
         else:
             self.insert([
-                "FUNCTION_STACK.push('%s')" % funciden,
-                "LINE_STACK.push('%s')" % lineiden
+                "PYSTOCHOBJ.func_stack.push('%s')" % funciden,
+                "PYSTOCHOBJ.line_stack.push('%s')" % lineiden
                 ])
 
     def visit_Compare(self, node):
@@ -1210,7 +1211,9 @@ class PyStochCompiler(codegen.SourceGenerator):
             example, the Call node is by itself on a line.
 
         """
-        
+
+        node.args.append(ast.parse('PYSTOCHID').body[0].value)
+
         # extract each of the children of the Call node with threshold
         # zero, that is, we already know that we have one call node
         # (because we're visiting it), so we don't want any of its
