@@ -1,7 +1,10 @@
 import argparse
 import compile as c
+import os
 from stack import Stack
 import sys
+import tempfile
+import traceback
 
 class PyStochObj(object):
 
@@ -20,8 +23,16 @@ def run(prog, args):
         execfile(prog)
     else:
         source = c.pystoch_compile(prog)
-        print source
-        exec(source)
+        temp = tempfile.NamedTemporaryFile(prefix='tmp_', suffix='.pystoch', dir='/tmp', delete=False)
+        temp.write(source)
+        temp.close()
+
+        try:
+            execfile(temp.name)
+        except:
+            traceback.print_exc(file=sys.stderr)
+        finally:
+            os.remove(temp.name)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run a PyStoch program.')

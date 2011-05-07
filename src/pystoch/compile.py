@@ -94,6 +94,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).__init__(' ' * 4, False)
         self.idens = []
         self.inloop = False
+        self.inclass = False
+        self.infunc = False
         
     def _gen_iden(self, node):
         """Generate a random unique PyStoch identifier.
@@ -570,7 +572,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         
         self.newline(extra=1)
         self.decorators(node)
-        self.newline(node)
+        super(PyStochCompiler, self).newline()
         self.write('def %s(' % node.name)
         node.args.args.append(ast.parse('PYSTOCHOBJ').body[0].value)
         self.signature(node.args)
@@ -591,7 +593,10 @@ class PyStochCompiler(codegen.SourceGenerator):
                 "PYSTOCHOBJ.func_stack.pop()"
                 ]
 
+        infunc = self.infunc
+        self.infunc = True
         self.body(node.body, write_before=write_before, write_after=write_after)
+        self.infunc = infunc
 
     def visit_ClassDef(self, node):
         """Rewrite the ClassDef visitor to push new values onto the
@@ -617,19 +622,11 @@ class PyStochCompiler(codegen.SourceGenerator):
             self.visit(base)
         self.write(have_args and '):' or ':')
 
-        write_before = [
-            "PYSTOCHOBJ.class_stack.push('%s')" % self._gen_iden(node),
-            "PYSTOCHOBJ.line_stack.push(0)"
-            ]
-
-        write_after = [
-            "",
-            'PYSTOCHOBJ.line_stack.pop()',
-            'PYSTOCHOBJ.class_stack.pop()',
-            ""
-            ]
-        
-        self.body(node.body, write_before=write_before, write_after=write_after)
+        inclass = self.inclass
+        self.inclass = True
+        self.body(node.body)
+        self.write('\n')
+        self.inclass = inclass
 
     def visit_Return(self, node):
         """Rewrite the Return visitor function to first store the
@@ -1212,7 +1209,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        node.args.append(ast.parse('PYSTOCHID').body[0].value)
+        node.args.append(ast.parse('PYSTOCHOBJ').body[0].value)
 
         # extract each of the children of the Call node with threshold
         # zero, that is, we already know that we have one call node
