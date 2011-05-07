@@ -15,8 +15,6 @@ import os
 import pdb
 import sys
 
-from _ast import If
-
 def pystoch_compile(source):
     """Compile python to pystoch.
 
@@ -279,9 +277,22 @@ class PyStochCompiler(codegen.SourceGenerator):
             self.write('else:')
             self.body(node.orelse)
 
+    def to_assign(self, value):
+        iden = self._gen_iden(value)
+        node = _ast.Assign()
+        node.targets = [ast.parse(iden).body[0].value]
+        node.value = value
+        return iden, node
+
     ########### Visitor Functions ###########
 
     def visit_FunctionDef(self, node):
+        """Rewrite the FunctionDef visitor to push a new value onto
+        the function and line stacks at the beginning of the function,
+        and then pop those values at the end of the function.
+
+        """
+        
         self.newline(extra=1)
         self.decorators(node)
         self.newline(node)
@@ -302,6 +313,12 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.body(node.body, write_before=write_before, write_after=write_after)
 
     def visit_ClassDef(self, node):
+        """Rewrite the ClassDef visitor to push new values onto the
+        class and line stacks at the beginning of the stack, and then
+        to pop those values at the end of the class.
+
+        """
+        
         have_args = []
         def paren_or_comma():
             if have_args:
@@ -348,106 +365,178 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.body(node.body, write_before=write_before, write_after=write_after)
 
     def visit_Return(self, node):
-        self.newline(node)
-        self.write('return_val = ')
-        self.visit(node.value)
+        """Rewrite the Return visitor function to first store the
+        return value of the function, then pop the line and function
+        stacks, then return the stored value.
 
+        TODO: This should somehow make sure that the line and function
+        stacks aren't popped again after the return statement.
+
+        """
+
+        # store the value of the return statement in `iden`
+        iden, assignment = self.to_assign(node.value)
+        self.visit(assignment)
+
+        # pop the line and function stacks, then return the stored
+        # value
         self.insert([
             "LINE_STACK.pop()",
             "FUNCTION_STACK.pop()",
-            "return return_val"
+            "return %s" % iden
             ])
         
     def visit_For(self, node):
-        self.newline(node)
-        iden = self._gen_iden(node)
-        self.write("%s = " % iden)
-        self.visit(node.iter)
+        """Rewrite the For visitor function to first store the
+        iterator of the for loop in a temporary variable, and then to
+        loop over the contents of that variable.  Additionally, push a
+        new value onto the loop stack before entering the for loop,
+        increment that value after each pass of the loop, and pop the
+        value after the loop has terminated.
+
+        """
+        
+        # store the value of the iterator for the for loop
+        iden, assignment = self.to_assign(node.iter)
+        self.visit(assignment)
+
+        # push a new value onto the loop stack
         self.newline(node)
         super(PyStochCompiler, self).newline()
         self.insert(["LOOP_STACK.push(0)"])
         super(PyStochCompiler, self).newline()
+
+        # iterate over the stored value for the for loop iterator
         self.write('for ')
         self.visit(node.target)
         self.write(' in %s:' % iden)
 
+        # increment the loop stack at the end of the body
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
+        
+        # and finally, pop the loop stack after the for loop is over
         self.insert("LOOP_STACK.pop()")
 
     def visit_While(self, node):
-        self.newline(node)
-        iden = self._gen_iden(node)
-        self.write("%s = " % iden)
-        self.visit(node.test)
+        """Rewrite the While visitor function to first store the test
+        of the while loop in a temporary variable, and then to loop
+        over the contents of that variable.  Additionally, push a new
+        value onto the loop stack before entering the while loop,
+        increment that value after each pass of the loop, and pop the
+        value after the loop has terminated.
+
+        """
+
+        # store the value of the test case for the while loop
+        iden, assignment = self.to_assign(node.test)
+        self.visit(assignment)
+
+        # push a new value onto the loop stack
         self.newline(node)
         super(PyStochCompiler, self).newline()
         self.insert(["LOOP_STACK.push(0)"])
         super(PyStochCompiler, self).newline()
+
+        # iterate over the stored test case
         self.write('while %s:' % iden)
 
+        # increment the loop stack at the end of the body
         self.body_or_else(node, write_before="LOOP_STACK.increment()")
+
+        # and finally, pop the loop stack at the end of the body
         self.insert("LOOP_STACK.pop()")
 
     def visit_ListComp(self, node):
+        """Rewrite the ListComp visitor function to turn the list
+        comprehension into a real for loop.  This is necessary to be
+        able to correctly label any random functions that get called
+        from within the list comprehension.  Basically, this function
+        creates a temporary variable for the list, and transforms the
+        comprehension into a for loop that appends values onto this
+        list.  The list name is then returned, so that whatever
+        element called the for loop can handle the assignment
+        properly.
+
+        """
+        
+        # make an identifier for the list
         self.newline(node)
         iden = self._gen_iden(node)
         self.write("%s = []" % iden)
         elt = node.elt
 
         def parse_generator(nodes):
+            """Transform the generator into a for loop.
+
+            """
+            
             node = nodes[-1]
             tempnode = ast.For()
             tempnode.target = node.target
             tempnode.iter = node.iter
             # TODO: deal with ifs here...
             if len(nodes) == 1:
-                gen = PyStochCompiler()
-                gen.visit(elt)
-                iden2 = self._gen_iden(gen.source)
-                # TODO: this is a placeholder, should be removed when
-                # I get around to rewriting nested function calls
-                body = [ast.parse("%s = %s" % (iden2, gen.source)),
+                iden2, assignment = self.to_assign(elt)
+                body = [assignment, 
                         ast.parse("%s.append(%s)" % (iden, iden2))]
             else:
                 body = [parse_generator(nodes[:-1])]
+                
             tempnode.body = body
             tempnode.orelse = None
             return tempnode
 
+        # visit the for loop
         self.visit(parse_generator(node.generators))
+
+        # return the identifier of the list we created
         return iden
             
     def visit_DictComp(self, node):
-        raise NotImplementedError
+        """Dictionary comprehensions are not supported at this time.
+
+        """
+        
+        raise NotImplementedError, "Dictionary comprehensions are not supported at this time"
 
     def visit_If(self, node):
-        iden = self._gen_iden(node)
-        self.newline(node)
-        self.write("%s = " % iden)
-        self.visit(node.test)
+        """Rewrite the If visitor function to assign the if and elif
+        tests to temporary variables, and then check these variables
+        in the actual if and elif statements.
 
+        """
+
+        # store the if test in a temporary variable
+        ifiden, assignment = self.to_assign(node.test)
+        self.visit(assignment)
+
+        # store each of the elif tests in temporary variables
         orig_node = node
         elif_idens = []
         while True:
             else_ = node.orelse
-            if len(else_) == 1 and isinstance(else_[0], If):
+            if len(else_) == 1 and isinstance(else_[0], _ast.If):
                 node = else_[0]
-                elif_idens.append(self._gen_iden(node))
-                self.newline(node)
-                self.write("%s = " % elif_idens[-1])
-                self.visit(node.test)
+                iden, assignment = self.to_assign(node.test)
+                elif_idens.append(iden)
+                self.visit(assignment)
             else:
                 break
 
+        # set the node back to the original node, and actually create
+        # the if statement using the temporary variable name
         node = orig_node
         self.newline(node)
-        self.write('if %s:' % iden)
+        self.write('if %s:' % ifiden)
         self.body(node.body)
 
+        # create the rest of the elifs using their temporary variable
+        # names, if they exist, and create the else statement if it
+        # exists
         i = 0
         while True:
             else_ = node.orelse
-            if len(else_) == 1 and isinstance(else_[0], If):
+            if len(else_) == 1 and isinstance(else_[0], _ast.If):
                 node = else_[0]
                 self.newline()
                 self.write('elif %s:' % elif_idens[i])
@@ -460,6 +549,14 @@ class PyStochCompiler(codegen.SourceGenerator):
                 break
 
     def visit_Assign(self, node):
+        """Rewrite the Assign visitor function to deal with list
+        comprehensions.
+
+        TODO: this should also deal with compound and nested function
+        calls
+
+        """
+        
         if isinstance(node.value, _ast.ListComp):
             iden = self.visit(node.value)
             self.newline(node)
@@ -473,6 +570,8 @@ class PyStochCompiler(codegen.SourceGenerator):
             super(PyStochCompiler, self).visit_Assign(node)
 
 if __name__ == "__main__":
+    # TODO: this should do some real argument parsing
+    
     infile = sys.argv[1]
     transform = pystoch_compile(infile)
 
