@@ -957,12 +957,42 @@ class PyStochCompiler(codegen.SourceGenerator):
     # 2) Expressions
 
     def visit_BoolOp(self, node):
+        """Calls the superclass' visit_BoolOp method, while
+        additionally checking to make sure that no Call nodes are
+        present in the node being visited.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_BoolOp
+
+        """
+
         super(PyStochCompiler, self).visit_BoolOp(node)
 
     def visit_BinOp(self, node):
+        """Calls the superclass' visit_BinOp method, while
+        additionally checking to make sure that no Call nodes are
+        present in the node being visited.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_BinOp
+
+        """
+
         super(PyStochCompiler, self).visit_BinOp(node)
 
     def visit_UnaryOp(self, node):
+        """Calls the superclass' visit_UnaryOp method, while
+        additionally checking to make sure that no Call nodes are
+        present in the node being visited.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_UnaryOp
+
+        """
+
         super(PyStochCompiler, self).visit_UnaryOp(node)
 
     def visit_Lambda(self, node):
