@@ -473,6 +473,16 @@ class PyStochCompiler(codegen.SourceGenerator):
             self.visit(node.value)
 
     def visit_Delete(self, node):
+        """Calls the superclass' visit_Delete method, while
+        additionally checking to make sure that no Call nodes are
+        present in the node being visited.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_Delete
+
+        """
+        
         if self.contains_call(node):
             raise UnexpectedCallException
         
@@ -500,6 +510,8 @@ class PyStochCompiler(codegen.SourceGenerator):
             super(PyStochCompiler, self).visit_Assign(node)
 
     def visit_AugAssign(self, node):
+        """TODO"""
+        
         super(PyStochCompiler, self).visit_AugAssign(node)
         
     def visit_Print(self, node):
@@ -507,6 +519,10 @@ class PyStochCompiler(codegen.SourceGenerator):
         Call nodes.  Any children with Call nodes are stored in
         temporary variables, and then the temporary variable is used
         in the actual print statement.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_Print
 
         """
         
@@ -716,6 +732,10 @@ class PyStochCompiler(codegen.SourceGenerator):
         temporary variables, and then the variable is used in the
         actual raise statement.
 
+        See Also
+        --------
+        codegen.SourceCompiler#visit_Raise
+
         """
         
         # if it doesn't contain a call node, then we can just call the super
@@ -773,9 +793,25 @@ class PyStochCompiler(codegen.SourceGenerator):
                 self.visit(node.tback)
 
     def visit_TryExcept(self, node):
+        """The superclass' visit_TryExcept method is called.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_TryExcept
+
+        """
+        
         super(PyStochCompiler, self).visit_TryExcept(node)
 
     def visit_TryFinally(self, node):
+        """The superclass' visit_TryFinally method is called.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_TryFinally
+
+        """
+        
         super(PyStochCompiler, self).visit_TryFinally(node)
 
     def visit_Assert(self, node):
@@ -908,6 +944,9 @@ class PyStochCompiler(codegen.SourceGenerator):
 
     def visit_Index(self, node):
         super(PyStochCompiler, self).visit_Index(node)
+
+    def visit_ExceptHandler(self, node):
+        super(PyStochCompiler, self).visit_ExceptHandler(node)
 
 if __name__ == "__main__":
     # TODO: this should do some real argument parsing
