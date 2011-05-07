@@ -301,6 +301,52 @@ class PyStochCompiler(codegen.SourceGenerator):
         node.value = value
         return iden, node
 
+    def contains_call(self, node):
+        """Checks whether or not a node (_ast.AST) contains any Call nodes.
+
+        Parameters
+        ----------
+        node : _ast.AST
+            The node to check for Call nodes
+
+        Returns
+        -------
+        out : boolean
+            Whether or not the node contains any Call nodes
+
+        """
+
+        def iter_fields(node):
+            """Iterate over all fields of a node, only yielding
+            existing fields.
+
+            """
+            for field in node._fields:
+                try:
+                    yield field, getattr(node, field)
+                except AttributeError:
+                    pass
+
+        class CallChecker(ast.NodeVisitor):
+            def visit_Call(self, node):
+                return True
+
+            def generic_visit(self, node):
+                for field, value in iter_fields(node):
+                    if isinstance(value, list):
+                        for item in value:
+                            if isinstance(item, _ast.AST):
+                                if self.visit(item):
+                                    return True
+                    elif isinstance(value, _ast.AST):
+                        if self.visit(value):
+                            return True
+
+                return False
+
+        cc = CallChecker()
+        return cc.visit(node)
+
     ########### Visitor Functions ###########
 
     # 1) Statements
