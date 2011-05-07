@@ -815,7 +815,53 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_TryFinally(node)
 
     def visit_Assert(self, node):
-        super(PyStochCompiler, self).visit_Assert(node)
+        """The Assert statement visitor function.
+
+        This function is not implemented in codegen.  It prints the
+        assert statement as normal, additionally rewriting the test
+        case and/or the message if they contain Call nodes.
+
+        Parameters
+        ----------
+        node : _ast.Assert
+            The Assert node to transform into source code
+
+        """
+
+        # check to see if the test case has a call node, if it does,
+        # then store the test case in a temporary variable
+        test_hascall = self.contains_call(node.test)
+        if test_hascall:
+            testiden, assignment = self.to_assign(node.test)
+            self.visit(assignment)
+
+        # check to see if the message has a call node, if it does,
+        # then store the message in a temporary variable
+        if node.msg is not None:
+            msg_hascall = self.contains_call(node.msg)
+            if msg_hascall:
+                msgiden, assignment = self.to_assign(node.msg)
+                self.visit(assignment)
+
+        # write the test case of the assert statement, optionally
+        # replacing it with the name of the temporary variable if
+        # there was a call node
+        self.newline(node)
+        self.write('assert ')
+        if test_hascall:
+            self.write(testiden)
+        else:
+            self.visit(node.test)
+
+        # if the message exists, then write that, optionally replacing
+        # it with the name of the temporary variable if there was a
+        # call node
+        if node.msg is not None:
+            self.write(', ')
+            if msg_hascall:
+                self.write(msgiden)
+            else:
+                self.visit(node.msg)
 
     def visit_Import(self, node):
         super(PyStochCompiler, self).visit_Import(node)
