@@ -14,3 +14,15 @@ class Stack(object):
 
     def decrement(self):
         self.stack[0] -= 1
+
+    def set(self, val):
+        self.stack[0] = val
+
+    def peek(self):
+        return self.stack[0]
+
+    def __str__(self):
+        return str(self.stack)
+
+    def __repr__(self):
+        return "<Stack %s>" % self.__str__()

@@ -60,6 +60,7 @@ def binomial(n, p, PYSTOCHOBJ=None):
         raise ValueError, "p must be between 0 and 1"
      
     return np.random.binomial(n, p)
+binomial.random = True
 
 def dirichlet(alpha, PYSTOCHOBJ=None):
     """Draw a sample from the Dirichlet distribution.
@@ -99,6 +100,7 @@ def dirichlet(alpha, PYSTOCHOBJ=None):
         raise ValueError, "alpha must be 1-dimensional"
     
     return np.random.dirichlet(alpha)
+dirichlet.random = True
 
 def exponential(scale, PYSTOCHOBJ=None):
     """Draw a sample from an exponential distribution.
@@ -134,6 +136,7 @@ def exponential(scale, PYSTOCHOBJ=None):
     """
     
     return np.random.exponential(scale)
+exponential.random = True
 
 def flip(weight=0.5, PYSTOCHOBJ=None):
     """Flip a fair or biased coin.
@@ -152,6 +155,7 @@ def flip(weight=0.5, PYSTOCHOBJ=None):
         raise ValueError, "weight must be between 0 and 1"
     
     return np.random.uniform(0, 1) <= weight
+flip.random = True
 
 def gamma(k, theta, PYSTOCHOBJ=None):
     """Draw a sample from a Gamma distribution.
@@ -202,6 +206,7 @@ def gamma(k, theta, PYSTOCHOBJ=None):
         raise ValueError, "theta must be greater than 0"
     
     return np.random.gamma(shape, scale)
+gamma.random = True
 
 def gaussian(mean, std, PYSTOCHOBJ=None):
     """Draw a random sample from a normal (Gaussian) distribution.
@@ -252,6 +257,7 @@ def gaussian(mean, std, PYSTOCHOBJ=None):
     """
 
     return np.random.normal(mu, sigma)
+gaussian.random = True
 
 def log_flip(weight=-0.69314718055994529, PYSTOCHOBJ=None):
     """Flip a fair or biased coin.
@@ -271,6 +277,7 @@ def log_flip(weight=-0.69314718055994529, PYSTOCHOBJ=None):
         raise ValueError, "weight must be less than or equal to 0"
     
     return flip(np.e ** weight)
+log_flip.random = True
 
 def poisson(lam, PYSTOCHOBJ=None):
     """Draw a sample from a poisson distribution.
@@ -307,6 +314,7 @@ def poisson(lam, PYSTOCHOBJ=None):
     """
 
     return np.random.poisson(lam)
+poisson.random = True
 
 def uniform(low, high, PYSTOCHOBJ=None):
     """Draw a sample from a uniform distribution.
@@ -341,3 +349,4 @@ def uniform(low, high, PYSTOCHOBJ=None):
     """
     
     return np.random.uniform(low, high)
+uniform.random = True

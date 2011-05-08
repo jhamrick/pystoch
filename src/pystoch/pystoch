@@ -24,8 +24,17 @@ class PyStochObj(object):
     def call(self, func, *args, **kwargs):
         if hasattr(func, "random") and func.random:
             kwargs['PYSTOCHOBJ'] = self
+            print "Calling %s..." % func.__name__
+            self.print_trace()
             
-        return func(*args, **kwargs)  
+        return func(*args, **kwargs)
+
+    def print_trace(self):
+        print "Module:", str(self.module_stack)
+        print "Class: ", str(self.class_stack)
+        print "Func:  ", str(self.func_stack)
+        print "Line:  ", str(self.line_stack)
+        print "Loop:  ", str(self.loop_stack)
         
 def run(prog, args):
     PYSTOCHOBJ = PyStochObj()

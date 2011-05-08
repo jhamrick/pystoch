@@ -16,6 +16,7 @@ import hashlib
 import os
 import pdb
 import sys
+from stack import Stack
 
 if sys.version_info[:2] != (2, 6):
     raise NotImplementedError, "PyStoch currently only supports Python 2.6"
@@ -98,6 +99,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.inloop = False
         self.inclass = False
         self.infunc = False
+        self.line = Stack()
         
     def _gen_iden(self, node):
         """Generate a random unique PyStoch identifier.
@@ -208,25 +210,16 @@ class PyStochCompiler(codegen.SourceGenerator):
         # identifier onto the module stack.  Also push a 0 onto the
         # line stack.
         iden = self._gen_iden(node)
-        self.insert([
-            "####################################################",
-            "PYSTOCHOBJ.module_stack.push('%s') #" % iden,
-            "PYSTOCHOBJ.line_stack.push(0)                      #",
-            "####################################################",
-            ""
-            ])
+        self.line.push(0)
+        self.insert("PYSTOCHOBJ.line_stack.push(0)")
 
         # compile the rest of the module
         self.visit(node)
 
         # and finally, pop the line and module stacks
-        self.write('\n')
-        self.insert([
-            "####################################################",
-            "PYSTOCHOBJ.line_stack.pop()                        #",
-            "PYSTOCHOBJ.module_stack.pop()                      #",
-            "####################################################"
-            ])
+        #self.write('\n')
+        self.insert("PYSTOCHOBJ.line_stack.pop()")
+        self.line.pop()
 
     def newline(self, node=None, extra=0):
         """Insert a newline.
@@ -259,7 +252,8 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # otherwise, incremet the line stack and then insert another
         # newline
-        self.write("PYSTOCHOBJ.line_stack.increment()")
+        self.line.increment()
+        self.write("PYSTOCHOBJ.line_stack.set(%s)" % self.line.peek())
         super(PyStochCompiler, self).newline(node=node, extra=extra)
 
     def body(self, statements, write_before=None, write_after=None):
@@ -586,6 +580,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.signature(node.args)
         self.write('):')
 
+        self.line.push(0)
         write_before = [
             "PYSTOCHOBJ.func_stack.push('%s')" % self._gen_iden(node),
             "PYSTOCHOBJ.line_stack.push(0)"
@@ -605,6 +600,9 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.infunc = True
         self.body(node.body, write_before=write_before, write_after=write_after)
         self.infunc = infunc
+
+        if not self.contains_return(node):
+            self.line.pop()
 
         self.insert("%s.random = True" % node.name)
 
@@ -647,7 +645,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        node = self.extract(node)
+        node = self.extract(node, threshold=0)
 
         # pop the line and function stacks
         if self.inloop:
@@ -661,6 +659,7 @@ class PyStochCompiler(codegen.SourceGenerator):
                 "PYSTOCHOBJ.line_stack.pop()",
                 "PYSTOCHOBJ.func_stack.pop()"
                 ])
+        self.line.pop()
 
         super(PyStochCompiler, self).newline()
         self.write("return ")
@@ -984,6 +983,13 @@ class PyStochCompiler(codegen.SourceGenerator):
             node.value = self.extract(node.value)
             super(PyStochCompiler, self).visit_Expr(node)
 
+    def visit_Pass(self, node):
+        """Pass keywords are not supported.
+
+        """
+
+        raise NotImplementedError, "Pass keywords are not supported"
+
     # 2) Expressions
 
     def visit_BoolOp(self, node):
@@ -1171,7 +1177,6 @@ class PyStochCompiler(codegen.SourceGenerator):
                 "%s = PYSTOCHOBJ.line_stack.pop()" % lineiden,
                 "%s = PYSTOCHOBJ.func_stack.pop()" % funciden
                 ])
-
 
         super(PyStochCompiler, self).newline()
         self.write("yield ")
