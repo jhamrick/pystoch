@@ -15,26 +15,66 @@ def pystochfunc(f):
 class PyStochObj(object):
 
     def __init__(self):
-        self.module_stack = Stack()
-        self.class_stack = Stack()
         self.func_stack = Stack()
         self.line_stack = Stack()
         self.loop_stack = Stack()
+
+        self.db = {}
+        self.num_rvs = 0
+        self.rv_vals = []
+        self.trace_lh = 0
     
     def call(self, func, *args, **kwargs):
         if hasattr(func, "random") and func.random:
             kwargs['PYSTOCHOBJ'] = self
-            print "Calling %s..." % func.__name__
-            self.print_trace()
-            
-        return func(*args, **kwargs)
+            #print "Calling %s..." % func.__name__
+            #self.print_trace()
+            return func(*args, **kwargs)
 
+        elif hasattr(func, "erp") and func.erp:
+            self.update_db(func, args)
+
+        else:
+            return func(*args, **kwargs)
+            
     def print_trace(self):
-        print "Module:", str(self.module_stack)
-        print "Class: ", str(self.class_stack)
         print "Func:  ", str(self.func_stack)
         print "Line:  ", str(self.line_stack)
         print "Loop:  ", str(self.loop_stack)
+
+    def update_db(self, erp_curr, args_curr):
+        name = "F%s-Li%s-Lo%s" % (self.func_stack.peek(),
+                               self.line_stack.peek(),
+                               self.loop_stack.peek())
+
+        if name in self.db:
+            erp_db, val, erp_lh, args_db = self.db[name]
+            success = True
+        else:
+            success = False
+            
+        if success and erp_curr == erp_db:
+            if args_curr == args_db:
+                self.trace_lh += erp_lh
+            else:
+                # TODO: compute likelihood erp_lh
+                self.db[name] = (erp_curr, val, erp_lh, args_curr)
+                self.trace_lh += erp_lh
+
+        else:
+            val = erp_curr(*args_curr)
+            # TODO: compute likelihood erp_lh
+            self.db[name] = (erp_curr, val, erp_lh, args_curr)
+            self.trace_lh += erp_lh
+
+        self.num_rvs += 1
+        self.rv_vals.append(val)
+
+    def _trace_update(self, func, db):
+        self.trace_lh = 0
+        self.db = db
+        func()
+        return self.trace_lh, self.db
         
 def run(prog, args):
     PYSTOCHOBJ = PyStochObj()

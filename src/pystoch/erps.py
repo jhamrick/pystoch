@@ -1,6 +1,11 @@
 import numpy as np
 
-def binomial(n, p, PYSTOCHOBJ=None):
+def erp(func):
+    func.erp = True
+    return func
+
+@erp
+def binomial(n, p):
     """Draw a sample from a binomial distribution.
 
     The sample is drawn from a Binomial distribution with specified
@@ -60,9 +65,9 @@ def binomial(n, p, PYSTOCHOBJ=None):
         raise ValueError, "p must be between 0 and 1"
      
     return np.random.binomial(n, p)
-binomial.random = True
 
-def dirichlet(alpha, PYSTOCHOBJ=None):
+@erp
+def dirichlet(alpha):
     """Draw a sample from the Dirichlet distribution.
 
     Draw a sample of dimension k from a Dirichlet distribution. A
@@ -100,9 +105,9 @@ def dirichlet(alpha, PYSTOCHOBJ=None):
         raise ValueError, "alpha must be 1-dimensional"
     
     return np.random.dirichlet(alpha)
-dirichlet.random = True
 
-def exponential(scale, PYSTOCHOBJ=None):
+@erp
+def exponential(scale):
     """Draw a sample from an exponential distribution.
 
     Its probability density function is
@@ -136,9 +141,9 @@ def exponential(scale, PYSTOCHOBJ=None):
     """
     
     return np.random.exponential(scale)
-exponential.random = True
 
-def flip(weight=0.5, PYSTOCHOBJ=None):
+@erp
+def flip(weight=0.5):
     """Flip a fair or biased coin.
 
     Given the weight, flip a coin and return True if it comes up heads
@@ -155,9 +160,9 @@ def flip(weight=0.5, PYSTOCHOBJ=None):
         raise ValueError, "weight must be between 0 and 1"
     
     return np.random.uniform(0, 1) <= weight
-flip.random = True
 
-def gamma(k, theta, PYSTOCHOBJ=None):
+@erp
+def gamma(k, theta):
     """Draw a sample from a Gamma distribution.
     
     A sample is drawn from a Gamma distribution with specified
@@ -206,9 +211,9 @@ def gamma(k, theta, PYSTOCHOBJ=None):
         raise ValueError, "theta must be greater than 0"
     
     return np.random.gamma(shape, scale)
-gamma.random = True
 
-def gaussian(mean, std, PYSTOCHOBJ=None):
+@erp
+def gaussian(mean, std):
     """Draw a random sample from a normal (Gaussian) distribution.
     
     The probability density function of the normal distribution, first
@@ -257,9 +262,9 @@ def gaussian(mean, std, PYSTOCHOBJ=None):
     """
 
     return np.random.normal(mu, sigma)
-gaussian.random = True
 
-def log_flip(weight=-0.69314718055994529, PYSTOCHOBJ=None):
+@erp
+def log_flip(weight=-0.69314718055994529):
     """Flip a fair or biased coin.
 
     Given the weight, flip a coin with weight e ** weight and return
@@ -277,9 +282,9 @@ def log_flip(weight=-0.69314718055994529, PYSTOCHOBJ=None):
         raise ValueError, "weight must be less than or equal to 0"
     
     return flip(np.e ** weight)
-log_flip.random = True
 
-def poisson(lam, PYSTOCHOBJ=None):
+@erp
+def poisson(lam):
     """Draw a sample from a poisson distribution.
 
     Given the `lam` parameter (for lambda), which is both the mean and
@@ -314,9 +319,9 @@ def poisson(lam, PYSTOCHOBJ=None):
     """
 
     return np.random.poisson(lam)
-poisson.random = True
 
-def uniform(low, high, PYSTOCHOBJ=None):
+@erp
+def uniform(low, high):
     """Draw a sample from a uniform distribution.
     
     Samples are uniformly distributed over the half-open interval
@@ -349,4 +354,3 @@ def uniform(low, high, PYSTOCHOBJ=None):
     """
     
     return np.random.uniform(low, high)
-uniform.random = True

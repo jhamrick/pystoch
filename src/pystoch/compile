@@ -217,7 +217,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.visit(node)
 
         # and finally, pop the line and module stacks
-        #self.write('\n')
+        self.write('\n')
         self.insert("PYSTOCHOBJ.line_stack.pop()")
         self.line.pop()
 
