@@ -64,10 +64,14 @@ class MetropolisHastings(object):
 
         """
 
+        num_traces = 0
+        num_accepted = 0
+
         # initialize the database of randomness using a rejection
         # query; this starts off the MCMC from a state that we know is
         # acceptable
         trace_loglh, db, trace = self.do_trace_update(self.init_rejection_query, {}, PYSTOCHOBJ)
+        sample = PYSTOCHOBJ.call(self.sample)
 
         # initialize the list of samples that we will return
         samples = []
@@ -77,6 +81,7 @@ class MetropolisHastings(object):
             # loop over the number of steps between samples
             steps = num_steps
             while steps > 0:
+                
                 # get the number of random variables and the list of
                 # random variables used in the last trac
                 num_rvs = PYSTOCHOBJ.num_rvs
@@ -107,6 +112,7 @@ class MetropolisHastings(object):
                 new_db = db
                 new_db[name] = (erp, new_val, new_erp_loglh, args_db, trace)
                 new_trace_loglh, new_db, new_trace = self.do_trace_update(self.query_model, new_db, PYSTOCHOBJ)
+                num_traces += 1
                 
                 # score the new trace
                 a = new_trace_loglh - trace_loglh + backward - forward
@@ -120,24 +126,28 @@ class MetropolisHastings(object):
                     db = new_db
                     trace = new_trace
                     trace_loglh = new_trace_loglh
+                    sample = PYSTOCHOBJ.call(self.sample)                    
 
                     # clean out the database of stale values
                     self.clean_db(trace, db)
 
-                    # update the number of steps we have to go
-                    steps -= 1
+                    num_accepted += 1
+
+                # update the number of steps we have to go
+                steps -= 1
 
             # update the number of samples we still have to go, and
             # add the current sample to our list of samples
             num_samples -= 1
-            print "samples remainin: %s" % num_samples
-            samples.append(PYSTOCHOBJ.call(self.sample))
+            #print "samples remaining: %s" % num_samples
+            #print "acceptance rate: %s%%" % (np.round(float(num_accepted) / num_traces, decimals=4)*100)
+            samples.append(sample)
 
         return samples
 
     def clean_db(self, trace, db):
         for name in db.keys():
-            if db[name][4] < trace - 1:
+            if db[name][4] < trace - 5:
                 del db[name]
 
     run.random = True

@@ -12,6 +12,7 @@ def run(prog, args):
     PYSTOCHOBJ = PyStochObj()
 
     filename = None
+    tempname = None
     sys.argv = [prog] + args
     
     if prog.endswith('.pystoch'):
@@ -23,11 +24,13 @@ def run(prog, args):
         temp.write(source)
         temp.close()
         filename = temp.name
+        tempname = temp.name
 
     try:
-        execfile(temp.name, {'PYSTOCHOBJ': PYSTOCHOBJ, 'sys': sys})
+        execfile(filename, {'PYSTOCHOBJ': PYSTOCHOBJ, 'sys': sys})
     finally:
-        os.remove(temp.name)
+        if tempname is not None:
+            os.remove(temp.name)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run a PyStoch program.')
