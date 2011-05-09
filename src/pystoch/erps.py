@@ -1,10 +1,30 @@
 import numpy as np
+import scipy.stats.distributions as dists
 
 def erp(func):
     func.erp = True
     return func
 
+def prob(prob_func):
+    def wrap(func):
+        func.prob = prob_func
+        return func
+    return wrap
+
+def _binomial_pmf(x, n, p):
+    """Probability mass function at x of the given binomial
+    distribution with parameters n and p.
+
+    See Also
+    --------
+    scipy.stats.distributions.binom.pdf
+    
+    """
+    
+    return dists.binom.pmf(x, n, p)
+
 @erp
+@prob(_binomial_pmf)
 def binomial(n, p):
     """Draw a sample from a binomial distribution.
 
@@ -59,6 +79,7 @@ def binomial(n, p):
                                               
 
     """
+
     if n <= 0:
         raise ValueError, "n must be greater than 0"
     if p < 0 or p > 1:
@@ -66,47 +87,20 @@ def binomial(n, p):
      
     return np.random.binomial(n, p)
 
-@erp
-def dirichlet(alpha):
-    """Draw a sample from the Dirichlet distribution.
+def _exponential_pdf(x, scale):
+    """Probabiliy density function at x for the exponential
+    distribution with scale `scale`.
 
-    Draw a sample of dimension k from a Dirichlet distribution. A
-    Dirichlet-distributed random variable can be seen as a
-    multivariate generalization of a Beta distribution. Dirichlet pdf
-    is the conjugate prior of a multinomial in Bayesian inference.
-    
-    P1arameters
-    ----------
-    alpha : 1-d array
-        Parameter of the distribution (k dimension for sample of
-        dimension k).
-        
-    Notes
-    -----
-    .. math:: X \approx \prod_{i=1}^{k}{x^{\alpha_i-1}_i}
+    See Also
+    --------
+    scipy.stats.distributions.expon.pdf
 
-    Uses the following property for computation: for each dimension,
-    draw a random sample y_i from a standard gamma generator of shape
-    `alpha_i`, then
-    :math:`X = \frac{1}{\sum_{i=1}^k{y_i}} (y_1, \ldots, y_n)` is
-    Dirichlet distributed.
-
-    References
-    ----------
-    .. [1] David McKay, "Information Theory, Inference and Learning
-           Algorithms," chapter 23,
-           http://www.inference.phy.cam.ac.uk/mackay/
-                  
     """
-
-    if not isinstance(alpha, np.ndarray):
-        alpha = np.array(alpha)
-    if len(alpha.shape) > 1:
-        raise ValueError, "alpha must be 1-dimensional"
     
-    return np.random.dirichlet(alpha)
+    return dists.expon.pdf(x, scale=scale)
 
 @erp
+@prob(_exponential_pdf)
 def exponential(scale):
     """Draw a sample from an exponential distribution.
 
@@ -142,7 +136,18 @@ def exponential(scale):
     
     return np.random.exponential(scale)
 
+def _flip_pmf(x, weight):
+    """The probability mass function for a single coin flip.
+
+    """
+    
+    if x:
+        return weight
+    else:
+        return 1 - weight
+
 @erp
+@prob(_flip_pmf)
 def flip(weight=0.5):
     """Flip a fair or biased coin.
 
@@ -161,7 +166,20 @@ def flip(weight=0.5):
     
     return np.random.uniform(0, 1) <= weight
 
+def _gamma_pdf(x, k, theta):
+    """The probability density at x for a gamma distribution with
+    shape k and scale theta.
+
+    See Also
+    --------
+    scipy.stats.distributions.gamma.pdf
+
+    """
+    
+    return dists.gamma.pdf(x, k, scale=theta)
+
 @erp
+@prob(_gamma_pdf)
 def gamma(k, theta):
     """Draw a sample from a Gamma distribution.
     
@@ -212,7 +230,20 @@ def gamma(k, theta):
     
     return np.random.gamma(shape, scale)
 
+def _gaussian_pdf(x, mean, std):
+    """The probability density at x for the gaussian distribution with
+    mean `mean` and standard deviation `std`.
+
+    See Also
+    --------
+    scipy.stats.distributions.norm.pdf
+
+    """
+    
+    return dists.norm.pdf(x, loc=mean, scale=std)
+
 @erp
+@prob(_gaussian_pdf)
 def gaussian(mean, std):
     """Draw a random sample from a normal (Gaussian) distribution.
     
@@ -263,7 +294,18 @@ def gaussian(mean, std):
 
     return np.random.normal(mu, sigma)
 
+def _log_flip_pmf(x, weight):
+    """The probability mass at x for a log-weighted coin flip.
+
+    """
+    
+    if x:
+        return np.e ** weight
+    else:
+        return 1 - (np.e ** weight)
+
 @erp
+@prob(_log_flip_pmf)
 def log_flip(weight=-0.69314718055994529):
     """Flip a fair or biased coin.
 
@@ -283,7 +325,19 @@ def log_flip(weight=-0.69314718055994529):
     
     return flip(np.e ** weight)
 
+def _poisson_pmf(x, lam):
+    """The probability mass at x for the poisson distribution with parameter `lam`.
+
+    See Also
+    --------
+    scipy.stats.distributions.poisson.pmf
+
+    """
+    
+    return dists.poisson.pmf(x, lam)
+
 @erp
+@prob(_poisson_pmf)
 def poisson(lam):
     """Draw a sample from a poisson distribution.
 
@@ -320,7 +374,16 @@ def poisson(lam):
 
     return np.random.poisson(lam)
 
+def _uniform_pdf(x, low, high):
+    """The probability density at x for the uniform distribution from
+    `low` to `high`.
+
+    """
+    
+    return 1.0 / (high - low)
+
 @erp
+@prob(_uniform_pdf)
 def uniform(low, high):
     """Draw a sample from a uniform distribution.
     

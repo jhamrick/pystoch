@@ -1,15 +1,15 @@
-from queries import RejectionQuery
+from queries import MetropolisHastings
 from erps import flip
 import numpy as np
 
-class ShortTest(RejectionQuery):
+class ShortTest(MetropolisHastings):
 
     def __init__(self):
         self.a = None
         self.b = None
 
     def query_model(self):
-        self.a = flip()
+        self.a = flip(0.5)
         if self.a:
             self.b = flip(0.9)
         else:
@@ -22,6 +22,6 @@ class ShortTest(RejectionQuery):
         return self.b
 
 query = ShortTest()
-samples = [query.run() for x in range(100)]
+samples = query.run(100, 100)
 
 print np.mean(samples)

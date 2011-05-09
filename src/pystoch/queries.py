@@ -1,62 +1,111 @@
+import erps
+import numpy as np
+
+def random(func):
+    func.random = True
+    return func
+
 class RejectionQuery(object):
+    global random
 
     def __init__(self):
         pass
 
-    def run(self):
-        PYSTOCHOBJ.func_stack.push('PYSTOCHID_882956cd')
+    @random
+    def run(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.clear()
+        PYSTOCHOBJ.func_stack.push('PYSTOCHID_ad8a8f0c')
         PYSTOCHOBJ.line_stack.push(0)
         PYSTOCHOBJ.line_stack.set(1)
         test = False
         PYSTOCHOBJ.line_stack.set(2)
         PYSTOCHOBJ.loop_stack.push(0)
-
         while (not test):
             PYSTOCHOBJ.loop_stack.increment()
             PYSTOCHOBJ.line_stack.set(3)
             PYSTOCHOBJ.call(self.query_model)
             PYSTOCHOBJ.line_stack.set(4)
             test = PYSTOCHOBJ.call(self.condition)
-
         PYSTOCHOBJ.loop_stack.pop()
         PYSTOCHOBJ.line_stack.set(5)
-        PYSTOCHID_952de0a1 = PYSTOCHOBJ.call(self.sample)
+        PYSTOCHID_e9cd7cea = PYSTOCHOBJ.call(self.sample)
         PYSTOCHOBJ.line_stack.pop()
         PYSTOCHOBJ.func_stack.pop()
-        return PYSTOCHID_952de0a1
+        return PYSTOCHID_e9cd7cea
 
 class MetropolisHastings(object):
+    global random
 
-    def __init__(self, samples, steps):
-        self.samples = samples
-        self.steps = steps
+    def __init__(self):
+        pass
 
-    def kernel(val, args):
-        return 0.0
+    def kernel(self, erp, args):
+        return erp(*args)
+    def _kernel_pdf(self, x, erp, args):
+        return erp.pdf(*args)
+    kernel.pdf = _kernel_pdf
 
-    def run(self, PYSTOCHOBJ=None):
-        trace_lh, db = PYSTOCHOBJ.trace_update(self.query_model, {})
+    def init_rejection_query(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.clear()
+        PYSTOCHOBJ.func_stack.push('PYSTOCHID_7192ffd0')
+        PYSTOCHOBJ.line_stack.push(0)
+        PYSTOCHOBJ.line_stack.set(1)
+        test = False
+        PYSTOCHOBJ.line_stack.set(2)
+        PYSTOCHOBJ.loop_stack.push(0)
+        while (not test):
+            PYSTOCHOBJ.loop_stack.increment()
+            PYSTOCHOBJ.line_stack.set(3)
+            PYSTOCHOBJ.call(self.query_model)
+            PYSTOCHOBJ.line_stack.set(4)
+            test = PYSTOCHOBJ.call(self.condition)
+        PYSTOCHOBJ.loop_stack.pop()
+        PYSTOCHOBJ.line_stack.pop()
+        PYSTOCHOBJ.func_stack.pop()
 
-        while True:
-            # TODO: pick random R.V. via name
-            name = None
-            erp, val, erp_lh, args_db = db[name]
-            # TODO: propose new value
-            new_val = self.kernel(val, args)
-            F = np.log(self.kernel())
-            R = np.log(self.kernel())
-            new_erp_lh = np.log(dist())
+    @random
+    def run(self, num_samples, num_steps, PYSTOCHOBJ=None):
+        trace_lh, db, trace = PYSTOCHOBJ.trace_update(self.init_rejection_query, {})
+        num_rvs = PYSTOCHOBJ.num_rvs
+        rvs = PYSTOCHOBJ.rvs
+        samples = []
 
-            new_db = db
-            new_db[name] = (erp, new_val, new_erp_lh, args_db)
-            new_trace_lh, new_db = PYSTOCHOBJ.trace_update(self.query_model, new_db)
-            if np.log(rand) < new_trace_lh - trace_lh + R - F:
-                # accept
-                db = new_db
-                trace_lh = new_trace_lh
-                # clean out unused values from db
-            else:
-                # reject, discard db
-                pass
-            
+        while num_samples > 0:
+            steps = num_steps
+            while steps > 0:
+                name = rvs[np.random.randint(num_rvs)]
+                erp, val, erp_lh, args_db, trace = db[name]
+
+                # propose a new value
+                new_val = erp(val, *args_db)
+                forward = np.log(self.kernel.pdf(newval, val, args_db))
+                backward = np.log(self.kernel.pdf(val, newval, args_db))
+                new_erp_lh = np.log(erp.prob(val, *args_db))
+
+                # propose new trace
+                new_db = db
+                new_db[name] = (erp, new_val, new_erp_lh, args_db, trace)
+                new_trace_lh, new_db, new_trace = PYSTOCHOBJ.trace_update(self.query_model, new_db)
+                
+                # score the trace
+                a = new_trace_lh - trace_lh + backward - forward
+
+                # accept the new state
+                if np.log(erps.uniform(0, 1)) < a:
+                    db = new_db
+                    trace = new_trace
+                    trace_lh = new_trace_lh
+                    self.clean_db(trace, db)
+                    steps -= 1
+
+            num_samples -= 1
+            samples.append(self.sample(PYSTOCHOBJ))
+
+        return samples
+
+    def clean_db(self, trace, db):
+        for name in db:
+            if db[name][4] < trace - 1:
+                del db[name]
+
     run.random = True
