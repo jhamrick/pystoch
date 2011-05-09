@@ -20,7 +20,7 @@ class RejectionQuery(object):
         PYSTOCHOBJ.line_stack.set(2)
         PYSTOCHOBJ.loop_stack.push(0)
         while (not test):
-            PYSTOCHOBJ.clear()
+            PYSTOCHOBJ.clear_trace()
             PYSTOCHOBJ.db = {}
             PYSTOCHOBJ.loop_stack.increment()
             PYSTOCHOBJ.line_stack.set(3)
@@ -41,14 +41,14 @@ class MetropolisHastings(object):
         pass
 
     def kernel(self, erp, val, args):
-        return erp(*args)
+        return erp(*args[0], **args[1])
     def _kernel_pdf(erp, new_val, val, args):
-        return erp.prob(new_val, *args)
+        return erp.prob(new_val, *args[0], **args[1])
     kernel.pdf = _kernel_pdf
 
     @random
     def init_rejection_query(self, PYSTOCHOBJ):
-        PYSTOCHOBJ.clear()
+        PYSTOCHOBJ.clear_trace()
         PYSTOCHOBJ.func_stack.push('PYSTOCHID_7192ffd0')
         PYSTOCHOBJ.line_stack.push(0)
         PYSTOCHOBJ.line_stack.set(1)
@@ -56,7 +56,7 @@ class MetropolisHastings(object):
         PYSTOCHOBJ.line_stack.set(2)
         PYSTOCHOBJ.loop_stack.push(0)
         while (not test):
-            PYSTOCHOBJ.clear()
+            PYSTOCHOBJ.clear_trace()
             PYSTOCHOBJ.db = {}
             PYSTOCHOBJ.loop_stack.increment()
             PYSTOCHOBJ.line_stack.set(3)
@@ -112,19 +112,25 @@ class MetropolisHastings(object):
                 # TODO: am I doing this right?
                 new_val = self.kernel(erp, val, args_db)
 
+                print "ERP: %s" % name
+                print "Old value: %s" % val
+                print "New value: %s" % new_val
+
                 # using the proposed value, calculate the forward and
                 # backward probability, as well as the log likelihood
                 # for that probability
                 forward = np.log(self.kernel.pdf(erp, new_val, val, args_db))
                 backward = np.log(self.kernel.pdf(erp, val, new_val, args_db))
-                new_erp_loglh = np.log(erp.prob(new_val, *args_db))
+                new_erp_loglh = np.log(erp.prob(new_val, *args_db[0], **args_db[1]))
 
                 # propose a new trace by creating a copy of the
                 # current database, updating it with the new value and
                 # log likelihood, and then updating the trace
                 new_db = db
+                assert new_db == db
                 new_db[name] = (erp, new_val, new_erp_loglh, args_db, trace)
                 new_trace_loglh, new_db, new_trace = PYSTOCHOBJ.trace_update(self.query_model, new_db)
+                assert new_db != db
                 
                 # score the new trace
                 a = new_trace_loglh - trace_loglh + backward - forward
