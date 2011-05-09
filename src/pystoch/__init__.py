@@ -1,1 +1,1 @@
-__all__ = ["erps", "graphing", "pystochobj", "queries", "stack"]
+__all__ = ["erps", "graphing", "pystochobj", "queries", "stack", "compile"]
