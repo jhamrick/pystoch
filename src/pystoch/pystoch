@@ -9,10 +9,6 @@ import tempfile
 import traceback
 import numpy as np
 
-def pystochfunc(f):
-    f.random = True
-    return f
-
 class PyStochObj(object):
 
     def __init__(self):
@@ -101,7 +97,7 @@ def run(prog, args):
     PYSTOCHOBJ = PyStochObj()
 
     filename = None
-    sys.argv = args
+    sys.argv = [prog] + args
     
     if prog.endswith('.pystoch'):
         filename = prog
@@ -114,9 +110,7 @@ def run(prog, args):
         filename = temp.name
 
     try:
-        execfile(temp.name, {'PYSTOCHOBJ': PYSTOCHOBJ})
-    except:
-        traceback.print_exc(file=sys.stderr)
+        execfile(temp.name, {'PYSTOCHOBJ': PYSTOCHOBJ, 'sys': sys})
     finally:
         os.remove(temp.name)
 

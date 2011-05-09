@@ -1,28 +1,35 @@
 from queries import MetropolisHastings
 from erps import flip
+from graphing import hist
 import numpy as np
 
 class ShortTest(MetropolisHastings):
 
     def __init__(self):
-        self.a = None
-        self.b = None
+        self.A = None
+        self.B = None
+        self.C = None
+        self.D = None
+        self.baserate = 0.1
 
     def query_model(self):
-        self.a = flip(0.5)
-        if self.a:
-            self.b = flip(0.9)
-        else:
-            self.b = flip(0.4)
+        self.A = int(flip(self.baserate))
+        self.B = int(flip(self.baserate))
+        self.C = int(flip(self.baserate))
+        self.D = self.A + self.B + self.C
 
     def sample(self):
-        return self.a
+        return self.A
 
     def condition(self):
-        return self.b
+        return self.D >= 2
 
 query = ShortTest()
 samples = query.run(100, 100)
 
 print samples
 print np.mean(samples)
+
+hist(samples, "Value of A, given that D is greater than or equal to 2")
+plt.hist(samples, bins=2)
+plt.show()

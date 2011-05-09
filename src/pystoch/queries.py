@@ -106,7 +106,7 @@ class MetropolisHastings(object):
 
     def clean_db(self, trace, db):
         for name in db.keys():
-            if db[name][4] < trace:
+            if db[name][4] < trace - 1:
                 del db[name]
 
     run.random = True
