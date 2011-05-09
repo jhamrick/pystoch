@@ -47,9 +47,9 @@ class PyStochObj(object):
 
 
     def update_db(self, erp_curr, args_curr):
-        name = "F%s-Li%s-Lo%s" % (self.func_stack.peek(),
-                                  self.line_stack.peek(),
-                                  self.loop_stack.peek())
+        name = "%s-%s-%s" % (self.func_stack.peek(),
+                             self.line_stack.peek(),
+                             self.loop_stack.peek())
         #print name
 
         if name in self.db:
@@ -84,14 +84,13 @@ class PyStochObj(object):
 
     def clear(self):
         self.trace_lh = 0
-        self.db = {}
         self.num_rvs = 0
         self.rvs = []
 
     def trace_update(self, func, db):
         self.clear()
 
-        func(self)
+        self.call(func)
         db = self.db
         trace_lh = self.trace_lh
         self.curr_trace += 1

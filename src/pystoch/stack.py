@@ -19,7 +19,9 @@ class Stack(object):
         self.stack[0] = val
 
     def peek(self):
-        return self.stack[0]
+        if len(self.stack) > 0:
+            return self.stack[0]
+        return 'null'
 
     def __str__(self):
         return str(self.stack)

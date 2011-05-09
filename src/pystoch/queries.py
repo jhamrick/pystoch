@@ -39,13 +39,14 @@ class MetropolisHastings(object):
     def __init__(self):
         pass
 
-    def kernel(self, erp, args):
+    def kernel(self, erp, val, args):
         return erp(*args)
-    def _kernel_pdf(self, x, erp, args):
-        return erp.pdf(*args)
+    def _kernel_pdf(erp, new_val, val, args):
+        return erp.prob(new_val, *args)
     kernel.pdf = _kernel_pdf
 
-    def init_rejection_query(self, PYSTOCHOBJ=None):
+    @random
+    def init_rejection_query(self, PYSTOCHOBJ):
         PYSTOCHOBJ.clear()
         PYSTOCHOBJ.func_stack.push('PYSTOCHID_7192ffd0')
         PYSTOCHOBJ.line_stack.push(0)
@@ -66,21 +67,21 @@ class MetropolisHastings(object):
     @random
     def run(self, num_samples, num_steps, PYSTOCHOBJ=None):
         trace_lh, db, trace = PYSTOCHOBJ.trace_update(self.init_rejection_query, {})
-        num_rvs = PYSTOCHOBJ.num_rvs
-        rvs = PYSTOCHOBJ.rvs
         samples = []
 
         while num_samples > 0:
             steps = num_steps
             while steps > 0:
+                num_rvs = PYSTOCHOBJ.num_rvs
+                rvs = PYSTOCHOBJ.rvs
                 name = rvs[np.random.randint(num_rvs)]
                 erp, val, erp_lh, args_db, trace = db[name]
 
                 # propose a new value
-                new_val = erp(val, *args_db)
-                forward = np.log(self.kernel.pdf(newval, val, args_db))
-                backward = np.log(self.kernel.pdf(val, newval, args_db))
-                new_erp_lh = np.log(erp.prob(val, *args_db))
+                new_val = self.kernel(erp, val, args_db)
+                forward = np.log(self.kernel.pdf(erp, new_val, val, args_db))
+                backward = np.log(self.kernel.pdf(erp, val, new_val, args_db))
+                new_erp_lh = np.log(erp.prob(new_val, *args_db))
 
                 # propose new trace
                 new_db = db
@@ -99,13 +100,13 @@ class MetropolisHastings(object):
                     steps -= 1
 
             num_samples -= 1
-            samples.append(self.sample(PYSTOCHOBJ))
+            samples.append(PYSTOCHOBJ.call(self.sample))
 
         return samples
 
     def clean_db(self, trace, db):
-        for name in db:
-            if db[name][4] < trace - 1:
+        for name in db.keys():
+            if db[name][4] < trace:
                 del db[name]
 
     run.random = True

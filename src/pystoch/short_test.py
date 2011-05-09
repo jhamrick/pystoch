@@ -24,4 +24,5 @@ class ShortTest(MetropolisHastings):
 query = ShortTest()
 samples = query.run(100, 100)
 
+print samples
 print np.mean(samples)
