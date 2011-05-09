@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def hist(samples, title):
+def _hist(samples):
     bins = {}
     for sample in samples:
         if str(sample) not in bins:
@@ -11,13 +11,18 @@ def hist(samples, title):
     binkeys = bins.keys()
     binkeys.sort()
 
-    hist = []
+    binvals = []
     for key in binkeys:
-        hist.append(bins[key])
+        binvals.append(bins[key])
 
+    return binkeys, binvals
+
+def hist(samples, title):
+    binkeys, binvals = _hist(samples)
+    
     width = 0.8
     left = np.arange(len(binkeys))
-    height = hist
+    height = binvals
 
     plt.bar(left, height, width)
     plt.title(title)
@@ -25,4 +30,8 @@ def hist(samples, title):
     plt.axis([left[0] - (width / 2.0), left[-1] + (3.0 * (width / 2.0)), 0, np.sum(height)])
     plt.show()
 
-    
+def print_hist(samples, title):
+    binkeys, binvals = _hist(samples)
+
+    for key, val in zip(binkeys, binvals):
+        print "%s\t%s" % (key, val)

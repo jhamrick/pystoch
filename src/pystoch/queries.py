@@ -136,14 +136,14 @@ class MetropolisHastings(object):
             # add the current sample to our list of samples
             num_samples -= 1
             #print "samples remaining: %s" % num_samples
-            print "acceptance rate: %s%%" % (np.round(float(num_accepted) / num_traces, decimals=4)*100)
             samples.append(sample)
 
+        print "Average acceptance rate: %s%%" % (np.round(float(num_accepted) / num_traces, decimals=4)*100)
         return samples
 
     def clean_db(self, trace, db):
         for name in db.keys():
-            if db[name][4] < trace - 5:
+            if db[name][4] < trace:
                 del db[name]
 
     run.random = True
