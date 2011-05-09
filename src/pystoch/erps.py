@@ -15,6 +15,13 @@ def continuous(func):
     func.continuous = True
     return func
 
+def kernel(kernel_func, kernel_prob_func):
+    def wrap(func):
+        func.kernel = kernel_func
+        func.kernel.prob = kernel_prob_func
+        return func
+    return wrap
+
 def _binomial_pmf(x, n, p):
     """Probability mass function at x of the given binomial
     distribution with parameters n and p.
@@ -27,8 +34,23 @@ def _binomial_pmf(x, n, p):
     
     return dists.binom.pmf(x, n, p)
 
+def _binomial(n, p):
+    if n <= 0:
+        raise ValueError, "n must be greater than 0"
+    if p < 0 or p > 1:
+        raise ValueError, "p must be between 0 and 1"
+     
+    return np.random.binomial(n, p)
+
+def _binomial_kernel(val, n, p):
+    return _binomial(n, p)
+
+def _binomial_kernel_prob(new_val, val, n, p):
+    return _binomial_pmf(new_val, n, p)
+
 @erp
 @prob(_binomial_pmf)
+@kernel(_binomial_kernel, _binomial_kernel_prob)
 def binomial(n, p):
     """Draw a sample from a binomial distribution.
 
@@ -84,12 +106,7 @@ def binomial(n, p):
 
     """
 
-    if n <= 0:
-        raise ValueError, "n must be greater than 0"
-    if p < 0 or p > 1:
-        raise ValueError, "p must be between 0 and 1"
-     
-    return np.random.binomial(n, p)
+    return _binomial(n, p)
 
 def _exponential_pdf(x, scale):
     """Probabiliy density function at x for the exponential
@@ -103,9 +120,19 @@ def _exponential_pdf(x, scale):
     
     return dists.expon.pdf(x, scale=scale)
 
+def _exponential(scale):
+    return np.random.exponential(scale)
+
+def _exponential_kernel(val, scale):
+    return _exponential(scale)
+
+def _exponential_kernel_prob(new_val, val, scale):
+    return _exponential_pdf(new_val, scale)
+
 @erp
 @continuous
 @prob(_exponential_pdf)
+@kernel(_exponential_kernel, _exponential_kernel_prob)
 def exponential(scale):
     """Draw a sample from an exponential distribution.
 
@@ -139,7 +166,7 @@ def exponential(scale):
 
     """
     
-    return np.random.exponential(scale)
+    return _exponential(scale)
 
 def _flip_pmf(x, weight=0.5):
     """The probability mass function for a single coin flip.
@@ -151,8 +178,23 @@ def _flip_pmf(x, weight=0.5):
     else:
         return 1 - weight
 
+def _flip(weight=0.5):
+    if weight < 0.0 or weight > 1.0:
+        raise ValueError, "weight must be between 0 and 1"
+    
+    return np.random.uniform(0, 1) <= weight
+
+def _flip_kernel(val, weight=0.5):
+    return not val
+
+def _flip_kernel_prob(new_val, val, weight=0.5):
+    if new_val == (not val):
+        return 1.0
+    return 0.0
+
 @erp
 @prob(_flip_pmf)
+@kernel(_flip_kernel, _flip_kernel_prob)
 def flip(weight=0.5):
     """Flip a fair or biased coin.
 
@@ -166,10 +208,8 @@ def flip(weight=0.5):
         The weight of the coin, in the interval [0, 1].
 
     """
-    if weight < 0.0 or weight > 1.0:
-        raise ValueError, "weight must be between 0 and 1"
-    
-    return np.random.uniform(0, 1) <= weight
+
+    return _flip(weight)
 
 def _gamma_pdf(x, k, theta):
     """The probability density at x for a gamma distribution with
@@ -183,9 +223,24 @@ def _gamma_pdf(x, k, theta):
     
     return dists.gamma.pdf(x, k, scale=theta)
 
+def _gamma(k, theta):
+    if k <= 0:
+        raise ValueError, "k must be greater than 0"
+    if theta <= 0:
+        raise ValueError, "theta must be greater than 0"
+    
+    return np.random.gamma(shape, scale)
+
+def _gamma_kernel(val, k, theta):
+    return _gamma(k, theta)
+
+def _gamma_kernel_prob(new_val, val, k, theta):
+    return _gamma_pdf(new_val, k, theta)
+
 @erp
 @continuous
 @prob(_gamma_pdf)
+@kernel(_gamma_kernel, _gamma_kernel_prob)
 def gamma(k, theta):
     """Draw a sample from a Gamma distribution.
     
@@ -229,12 +284,7 @@ def gamma(k, theta):
 
     """
 
-    if k <= 0:
-        raise ValueError, "k must be greater than 0"
-    if theta <= 0:
-        raise ValueError, "theta must be greater than 0"
-    
-    return np.random.gamma(shape, scale)
+    return _gamma(k, thetat)
 
 def _gaussian_pdf(x, mean, std):
     """The probability density at x for the gaussian distribution with
@@ -247,6 +297,15 @@ def _gaussian_pdf(x, mean, std):
     """
     
     return dists.norm.pdf(x, loc=mean, scale=std)
+
+def _gaussian(mean, std):
+    return np.random.normal(mu, sigma)
+
+def _gaussian_kernel(val, mean, std):
+    return _gaussian(mean, std)
+
+def _gaussian_kernel_prob(new_val, val, mean, std):
+    return _gaussian_pdf(new_val, mean, std)
 
 @erp
 @continuous
@@ -299,7 +358,7 @@ def gaussian(mean, std):
 
     """
 
-    return np.random.normal(mu, sigma)
+    return _gaussian(mean, std)
 
 def _log_flip_pmf(x, weight=-0.69314718055994529):
     """The probability mass at x for a log-weighted coin flip.
@@ -311,8 +370,23 @@ def _log_flip_pmf(x, weight=-0.69314718055994529):
     else:
         return 1 - (np.e ** weight)
 
+def _log_flip(weight=-0.69314718055994529):
+    if weight > 0:
+        raise ValueError, "weight must be less than or equal to 0"
+    
+    return flip(np.e ** weight)
+
+def _log_flip_kernel(val, weight=-0.69314718055994529):
+    return not val
+
+def _log_flip_kernel_prob(new_val, val, weight=-0.69314718055994529):
+    if new_val == (not val):
+        return 1.0
+    return 0.0
+
 @erp
 @prob(_log_flip_pmf)
+@kernel(_log_flip_kernel, _log_flip_kernel_prob)
 def log_flip(weight=-0.69314718055994529):
     """Flip a fair or biased coin.
 
@@ -327,10 +401,7 @@ def log_flip(weight=-0.69314718055994529):
 
     """
 
-    if weight > 0:
-        raise ValueError, "weight must be less than or equal to 0"
-    
-    return flip(np.e ** weight)
+    return _log_flip(weight)
 
 def _poisson_pmf(x, lam):
     """The probability mass at x for the poisson distribution with parameter `lam`.
@@ -343,8 +414,18 @@ def _poisson_pmf(x, lam):
     
     return dists.poisson.pmf(x, lam)
 
+def _poisson(lam):
+    return np.random.poisson(lam)
+
+def _poisson_kernel(val, lam):
+    return _poisson(lam)
+
+def _poisson_kernel_prob(new_val, val, lam):
+    return _poisson_pmf(new_val, lam)
+
 @erp
 @prob(_poisson_pmf)
+@kernel(_poisson_kernel, _poisson_kernel_prob)
 def poisson(lam):
     """Draw a sample from a poisson distribution.
 
@@ -378,8 +459,8 @@ def poisson(lam):
            http://en.wikipedia.org/wiki/Poisson_distribution
            
     """
-
-    return np.random.poisson(lam)
+    
+    return _poisson(lam)
 
 def _uniform_pdf(x, low, high):
     """The probability density at x for the uniform distribution from
@@ -389,9 +470,19 @@ def _uniform_pdf(x, low, high):
     
     return 1.0 / (high - low)
 
+def _uniform(low, high):
+    return np.random.uniform(low, high)
+
+def _uniform_kernel(val, low, high):
+    return _uniform(low, high)
+
+def _uniform_kernel_prob(new_val, val, low, high):
+    return _uniform_pdf(new_val, low, high)
+
 @erp
 @continuous
 @prob(_uniform_pdf)
+@kernel(_uniform_kernel, _uniform_kernel_prob)
 def uniform(low, high):
     """Draw a sample from a uniform distribution.
     
@@ -424,4 +515,4 @@ def uniform(low, high):
 
     """
     
-    return np.random.uniform(low, high)
+    return _uniform(low, high)

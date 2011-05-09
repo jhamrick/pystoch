@@ -39,6 +39,7 @@ BINOP_SYMBOLS = {
     Mult:       '*',
     Div:        '/',
     FloorDiv:   '//',
+    Pow:        '**',
     Mod:        '%',
     LShift:     '<<',
     RShift:     '>>',

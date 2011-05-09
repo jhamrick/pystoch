@@ -1016,7 +1016,9 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
+        self.write('(')
         super(PyStochCompiler, self).visit_BinOp(node)
+        self.write(')')
 
     def visit_UnaryOp(self, node):
         """Calls the superclass' visit_UnaryOp method, while

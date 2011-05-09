@@ -1,0 +1,159 @@
+PYSTOCHOBJ.line_stack.push(0)
+PYSTOCHOBJ.line_stack.set(1)
+import pystoch
+PYSTOCHOBJ.line_stack.set(2)
+from pystoch.queries import RejectionQuery, MetropolisHastings
+PYSTOCHOBJ.line_stack.set(3)
+from pystoch.erps import flip
+PYSTOCHOBJ.line_stack.set(4)
+from pystoch.graphing import hist
+PYSTOCHOBJ.line_stack.set(5)
+import numpy as np
+PYSTOCHOBJ.line_stack.set(6)
+import datetime
+PYSTOCHOBJ.line_stack.set(7)
+import pdb
+
+
+PYSTOCHOBJ.line_stack.set(8)
+class Test(object):
+    random = True
+
+    def __init__(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.func_stack.push('PYSTOCHID_84197fce')
+        PYSTOCHOBJ.line_stack.push(0)
+        PYSTOCHOBJ.line_stack.set(1)
+        self.lung_cancer = None
+        PYSTOCHOBJ.line_stack.set(2)
+        self.TB = None
+        PYSTOCHOBJ.line_stack.set(3)
+        self.cold = None
+        PYSTOCHOBJ.line_stack.set(4)
+        self.stomach_flu = None
+        PYSTOCHOBJ.line_stack.set(5)
+        self.other = None
+        PYSTOCHOBJ.line_stack.set(6)
+        self.cough = None
+        PYSTOCHOBJ.line_stack.set(7)
+        self.fever = None
+        PYSTOCHOBJ.line_stack.set(8)
+        self.chest_pain = None
+        PYSTOCHOBJ.line_stack.set(9)
+        self.shortness_of_breath = None
+        PYSTOCHOBJ.line_stack.pop()
+        PYSTOCHOBJ.func_stack.pop()
+    __init__.random = True
+
+    def query_model(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.func_stack.push('PYSTOCHID_343aa206')
+        PYSTOCHOBJ.line_stack.push(0)
+        PYSTOCHOBJ.line_stack.set(1)
+        self.lung_cancer = PYSTOCHOBJ.call(flip, 0.01)
+        PYSTOCHOBJ.line_stack.set(2)
+        self.TB = PYSTOCHOBJ.call(flip, 0.0050000000000000001)
+        PYSTOCHOBJ.line_stack.set(3)
+        self.cold = PYSTOCHOBJ.call(flip, 0.20000000000000001)
+        PYSTOCHOBJ.line_stack.set(4)
+        self.stomach_flu = PYSTOCHOBJ.call(flip, 0.10000000000000001)
+        PYSTOCHOBJ.line_stack.set(5)
+        self.other = PYSTOCHOBJ.call(flip, 0.10000000000000001)
+        PYSTOCHOBJ.line_stack.set(6)
+        PYSTOCHID_c2d20877 = PYSTOCHOBJ.call(flip, 0.5)
+        PYSTOCHOBJ.line_stack.set(7)
+        PYSTOCHID_a9eee20a = PYSTOCHOBJ.call(flip, 0.29999999999999999)
+        PYSTOCHOBJ.line_stack.set(8)
+        PYSTOCHID_204c0251 = PYSTOCHOBJ.call(flip, 0.69999999999999996)
+        PYSTOCHOBJ.line_stack.set(9)
+        self.cough = ((self.cold and PYSTOCHID_c2d20877) or (self.lung_cancer and PYSTOCHID_a9eee20a) or (self.TB and PYSTOCHID_204c0251) or (self.other and PYSTOCHOBJ.call(flip, 0.01)))
+        PYSTOCHOBJ.line_stack.set(10)
+        PYSTOCHID_66b7447f = PYSTOCHOBJ.call(flip, 0.29999999999999999)
+        PYSTOCHOBJ.line_stack.set(11)
+        PYSTOCHID_5c8f7d09 = PYSTOCHOBJ.call(flip, 0.5)
+        PYSTOCHOBJ.line_stack.set(12)
+        PYSTOCHID_c4cba763 = PYSTOCHOBJ.call(flip, 0.20000000000000001)
+        PYSTOCHOBJ.line_stack.set(13)
+        self.fever = ((self.cold and PYSTOCHID_66b7447f) or (self.stomach_flu and PYSTOCHID_5c8f7d09) or (self.TB and PYSTOCHID_c4cba763) or (self.other and PYSTOCHOBJ.call(flip, 0.01)))
+        PYSTOCHOBJ.line_stack.set(14)
+        PYSTOCHID_6681a044 = PYSTOCHOBJ.call(flip, 0.40000000000000002)
+        PYSTOCHOBJ.line_stack.set(15)
+        PYSTOCHID_82963a73 = PYSTOCHOBJ.call(flip, 0.5)
+        PYSTOCHOBJ.line_stack.set(16)
+        self.chest_pain = ((self.lung_cancer and PYSTOCHID_6681a044) or (self.TB and PYSTOCHID_82963a73) or (self.other and PYSTOCHOBJ.call(flip, 0.01)))
+        PYSTOCHOBJ.line_stack.set(17)
+        PYSTOCHID_138f58e4 = PYSTOCHOBJ.call(flip, 0.40000000000000002)
+        PYSTOCHOBJ.line_stack.set(18)
+        PYSTOCHID_b3893526 = PYSTOCHOBJ.call(flip, 0.5)
+        PYSTOCHOBJ.line_stack.set(19)
+        self.shortness_of_breath = ((self.lung_cancer and PYSTOCHID_138f58e4) or (self.TB and PYSTOCHID_b3893526) or (self.other and PYSTOCHOBJ.call(flip, 0.01)))
+        PYSTOCHOBJ.line_stack.pop()
+        PYSTOCHOBJ.func_stack.pop()
+    query_model.random = True
+
+    def sample(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.func_stack.push('PYSTOCHID_85078970')
+        PYSTOCHOBJ.line_stack.push(0)
+        PYSTOCHOBJ.line_stack.pop()
+        PYSTOCHOBJ.func_stack.pop()
+        return (self.lung_cancer, self.TB)
+    sample.random = True
+
+    def condition(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.func_stack.push('PYSTOCHID_d8b3c093')
+        PYSTOCHOBJ.line_stack.push(0)
+        PYSTOCHOBJ.line_stack.pop()
+        PYSTOCHOBJ.func_stack.pop()
+        return (self.cough and self.fever and self.chest_pain and self.shortness_of_breath)
+    condition.random = True
+
+
+
+PYSTOCHOBJ.line_stack.set(9)
+class TestRejectionQuery(RejectionQuery, Test):
+    random = True
+
+    def __init__(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.func_stack.push('PYSTOCHID_c1f1cf68')
+        PYSTOCHOBJ.line_stack.push(0)
+        PYSTOCHOBJ.line_stack.set(1)
+        PYSTOCHOBJ.call(Test.__init__, self)
+        PYSTOCHOBJ.line_stack.pop()
+        PYSTOCHOBJ.func_stack.pop()
+    __init__.random = True
+
+
+
+PYSTOCHOBJ.line_stack.set(10)
+class TestMetropolisHastings(MetropolisHastings, Test):
+    random = True
+
+    def __init__(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.func_stack.push('PYSTOCHID_ef955e9f')
+        PYSTOCHOBJ.line_stack.push(0)
+        PYSTOCHOBJ.line_stack.set(1)
+        PYSTOCHOBJ.call(Test.__init__, self)
+        PYSTOCHOBJ.line_stack.pop()
+        PYSTOCHOBJ.func_stack.pop()
+    __init__.random = True
+
+PYSTOCHOBJ.line_stack.set(11)
+print 'Running metropolis hastings...'
+PYSTOCHOBJ.line_stack.set(12)
+before = PYSTOCHOBJ.call(datetime.datetime.now)
+PYSTOCHOBJ.line_stack.set(13)
+query2 = PYSTOCHOBJ.call(TestMetropolisHastings)
+PYSTOCHOBJ.line_stack.set(14)
+samples2 = PYSTOCHOBJ.call(query2.run, 1000, 100)
+PYSTOCHOBJ.line_stack.set(15)
+after = PYSTOCHOBJ.call(datetime.datetime.now)
+PYSTOCHOBJ.line_stack.set(16)
+td = (after - before)
+PYSTOCHOBJ.line_stack.set(17)
+secs = ((td.microseconds + ((td.seconds + ((td.days * 24) * 3600)) * (10 ** 6))) / (10.0 ** 6))
+PYSTOCHOBJ.line_stack.set(18)
+secs = PYSTOCHOBJ.call(np.round, secs, decimals=2)
+PYSTOCHOBJ.line_stack.set(19)
+print ('\tTime:   %s seconds' % secs)
+PYSTOCHOBJ.line_stack.set(20)
+PYSTOCHOBJ.call(hist, samples2, 'Lung Cancer, TB')
+
+PYSTOCHOBJ.line_stack.pop()

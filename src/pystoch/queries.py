@@ -28,20 +28,16 @@ class MetropolisHastings(object):
     def __init__(self):
         pass
 
-    def kernel(self, erp, val, args):
-        return erp(*args[0], **args[1])
-    def _kernel_pdf(erp, new_val, val, args):
-        return erp.prob(new_val, *args[0], **args[1])
-    kernel.pdf = _kernel_pdf
-
     @random
     def init_rejection_query(self, PYSTOCHOBJ):
+        print "Initializing...",
         test = False
         while (not test):
             PYSTOCHOBJ.clear_trace()
             PYSTOCHOBJ.db = {}
             PYSTOCHOBJ.call(self.query_model)
             test = PYSTOCHOBJ.call(self.condition)
+        print "Done"
 
     def do_trace_update(self, func, db, PYSTOCHOBJ):
         trace_loglh, db, trace = PYSTOCHOBJ.trace_update(func, db)
@@ -97,13 +93,13 @@ class MetropolisHastings(object):
 
                 # propose a new value using the erp's proposal kernel
                 # TODO: am I doing this right?
-                new_val = self.kernel(erp, val, args_db)
+                new_val = erp.kernel(val, *args_db[0], **args_db[1])
 
                 # using the proposed value, calculate the forward and
                 # backward probability, as well as the log likelihood
                 # for that probability
-                forward = np.log(self.kernel.pdf(erp, new_val, val, args_db))
-                backward = np.log(self.kernel.pdf(erp, val, new_val, args_db))
+                forward = np.log(erp.kernel.prob(new_val, val, *args_db[0], **args_db[1]))
+                backward = np.log(erp.kernel.prob(val, new_val, *args_db[0], **args_db[1]))
                 new_erp_loglh = np.log(erp.prob(new_val, *args_db[0], **args_db[1]))
 
                 # propose a new trace by creating a copy of the
@@ -140,7 +136,7 @@ class MetropolisHastings(object):
             # add the current sample to our list of samples
             num_samples -= 1
             #print "samples remaining: %s" % num_samples
-            #print "acceptance rate: %s%%" % (np.round(float(num_accepted) / num_traces, decimals=4)*100)
+            print "acceptance rate: %s%%" % (np.round(float(num_accepted) / num_traces, decimals=4)*100)
             samples.append(sample)
 
         return samples
