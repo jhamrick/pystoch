@@ -11,6 +11,10 @@ def prob(prob_func):
         return func
     return wrap
 
+def continuous(func):
+    func.continuous = True
+    return func
+
 def _binomial_pmf(x, n, p):
     """Probability mass function at x of the given binomial
     distribution with parameters n and p.
@@ -100,6 +104,7 @@ def _exponential_pdf(x, scale):
     return dists.expon.pdf(x, scale=scale)
 
 @erp
+@continuous
 @prob(_exponential_pdf)
 def exponential(scale):
     """Draw a sample from an exponential distribution.
@@ -136,7 +141,7 @@ def exponential(scale):
     
     return np.random.exponential(scale)
 
-def _flip_pmf(x, weight):
+def _flip_pmf(x, weight=0.5):
     """The probability mass function for a single coin flip.
 
     """
@@ -179,6 +184,7 @@ def _gamma_pdf(x, k, theta):
     return dists.gamma.pdf(x, k, scale=theta)
 
 @erp
+@continuous
 @prob(_gamma_pdf)
 def gamma(k, theta):
     """Draw a sample from a Gamma distribution.
@@ -243,6 +249,7 @@ def _gaussian_pdf(x, mean, std):
     return dists.norm.pdf(x, loc=mean, scale=std)
 
 @erp
+@continuous
 @prob(_gaussian_pdf)
 def gaussian(mean, std):
     """Draw a random sample from a normal (Gaussian) distribution.
@@ -294,7 +301,7 @@ def gaussian(mean, std):
 
     return np.random.normal(mu, sigma)
 
-def _log_flip_pmf(x, weight):
+def _log_flip_pmf(x, weight=-0.69314718055994529):
     """The probability mass at x for a log-weighted coin flip.
 
     """
@@ -383,6 +390,7 @@ def _uniform_pdf(x, low, high):
     return 1.0 / (high - low)
 
 @erp
+@continuous
 @prob(_uniform_pdf)
 def uniform(low, high):
     """Draw a sample from a uniform distribution.

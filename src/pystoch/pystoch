@@ -19,22 +19,18 @@ class PyStochObj(object):
         self.db = {}
         self.num_rvs = 0
         self.rvs = []
-        self.trace_lh = 0
+        self.trace_loglh = 0
         
         self.curr_trace = 0
     
     def call(self, func, *args, **kwargs):
         if hasattr(func, "random") and func.random:
             kwargs['PYSTOCHOBJ'] = self
-            #print "Calling %s..." % func.__name__
-            #self.print_trace()
-            return func(*args, **kwargs)
 
-        elif hasattr(func, "erp") and func.erp:
+        if hasattr(func, "erp") and func.erp:
             return self.update_db(func, args)
 
-        else:
-            return func(*args, **kwargs)
+        return func(*args, **kwargs)
             
     def print_trace(self):
         print "Func:  ", str(self.func_stack)
@@ -43,43 +39,85 @@ class PyStochObj(object):
 
 
     def update_db(self, erp_curr, args_curr):
+        """Update the database with the current random choice.
+
+        If the choice already exists in the database via its name
+        (determined by stack traces), and its parameters match the
+        parameters stored in the database, then we can just reuse the
+        old value.  If the parameters don't match, then we recompute
+        the likelihood of the stored value.  If the value isn't found
+        in the database at all, then we sample a new value and
+        calculate its likelihood.  Finally, we update the database
+        with the new value and likelihood, if necessary.
+
+        Paramters
+        ---------
+        erp_curr : function with erp attribute set to True
+            The random choice to update the database with
+        args_curr : list of arguments
+            The arguments to be passed to the random choice
+
+        Returns
+        -------
+        out : number
+            The value of calling erp_curr(*args_curr)
+
+        """
+        
+        # calculate the name of the current random choice
         name = "%s-%s-%s" % (self.func_stack.peek(),
                              self.line_stack.peek(),
                              self.loop_stack.peek())
-        #print name
 
+        # look up the name in the database
         if name in self.db:
-            erp_db, val, erp_lh, args_db, trace = self.db[name]
+            erp_db, val, erp_loglh, args_db, trace = self.db[name]
             success = True
         else:
             success = False
 
+        # if the random choice was found in the database and the ERP
+        # type matches that found in the database
         if success and erp_curr == erp_db:
 
-            # keep the database the same, except update the trace
-            if args_curr == args_db:
-                self.db[name] = (erp_curr, val, erp_lh, args_curr, self.curr_trace)
-                self.trace_lh += erp_lh
+            # if the args that the current random choice was called
+            # with are not the same as those stored in the database
+            if args_curr != args_db:
+                
+                # rescore the log likelihood by drawing from the
+                # probability density/mass function for the ERP
+                erp_loglh = np.log(erp_curr.prob(val, *args_curr))
+                # store the new log likelihood (plus trace marger) in the database
+                self.db[name] = (erp_curr, val, erp_loglh, args_curr, self.curr_trace)
+                # update the total log likelihood of the trace
+                self.trace_loglh += erp_loglh
 
-            # rescore ERP with new parameters
-            else:
-                erp_lh = np.log(erp_curr.prob(val, *args_curr))
-                self.db[name] = (erp_curr, val, erp_lh, args_curr, self.curr_trace)
-                self.trace_lh += erp_lh
-
-        # sample new randomness
+        # if the erp type changed, then we need to resample
         else:
+            # sample a new value from the distribution and calculate
+            # its log likelihood
             val = erp_curr(*args_curr)
-            erp_lh = np.log(erp_curr.prob(val, *args_curr))
-            self.db[name] = (erp_curr, val, erp_lh, args_curr, self.curr_trace)
-            self.trace_lh += erp_lh
+            erp_loglh = np.log(erp_curr.prob(val, *args_curr))
+            
 
+        # update the database to reflect any changes (including that
+        # this random choice was used during this trace)
+        self.db[name] = (erp_curr, val, erp_loglh, args_curr, self.curr_trace)
+        # update the total log likelihood of the trace
+        self.trace_loglh += erp_loglh
+
+        # update the total number of random variables encountered
+        # during this trace
         self.num_rvs += 1
+        # add the name of the random choice to the list of all random
+        # choices in this trace
         self.rvs.append(name)
+
+        # return the value of the random choice
         return val
 
     def clear(self):
-        self.trace_lh = 0
+        self.trace_loglh = 0
         self.num_rvs = 0
         self.rvs = []
 
@@ -88,10 +126,10 @@ class PyStochObj(object):
 
         self.call(func)
         db = self.db
-        trace_lh = self.trace_lh
+        trace_loglh = self.trace_loglh
         self.curr_trace += 1
         
-        return self.trace_lh, self.db, self.curr_trace-1
+        return self.trace_loglh, self.db, self.curr_trace-1
         
 def run(prog, args):
     PYSTOCHOBJ = PyStochObj()
