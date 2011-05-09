@@ -13,7 +13,6 @@ class RejectionQuery(object):
 
     @random
     def run(self, PYSTOCHOBJ=None):
-        PYSTOCHOBJ.clear()
         PYSTOCHOBJ.func_stack.push('PYSTOCHID_ad8a8f0c')
         PYSTOCHOBJ.line_stack.push(0)
         PYSTOCHOBJ.line_stack.set(1)
@@ -21,6 +20,8 @@ class RejectionQuery(object):
         PYSTOCHOBJ.line_stack.set(2)
         PYSTOCHOBJ.loop_stack.push(0)
         while (not test):
+            PYSTOCHOBJ.clear()
+            PYSTOCHOBJ.db = {}
             PYSTOCHOBJ.loop_stack.increment()
             PYSTOCHOBJ.line_stack.set(3)
             PYSTOCHOBJ.call(self.query_model)
@@ -55,6 +56,8 @@ class MetropolisHastings(object):
         PYSTOCHOBJ.line_stack.set(2)
         PYSTOCHOBJ.loop_stack.push(0)
         while (not test):
+            PYSTOCHOBJ.clear()
+            PYSTOCHOBJ.db = {}
             PYSTOCHOBJ.loop_stack.increment()
             PYSTOCHOBJ.line_stack.set(3)
             PYSTOCHOBJ.call(self.query_model)

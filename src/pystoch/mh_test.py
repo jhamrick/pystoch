@@ -31,5 +31,3 @@ print samples
 print np.mean(samples)
 
 hist(samples, "Value of A, given that D is greater than or equal to 2")
-plt.hist(samples, bins=2)
-plt.show()
