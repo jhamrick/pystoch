@@ -185,12 +185,14 @@ def _flip(weight=0.5):
     return np.random.uniform(0, 1) <= weight
 
 def _flip_kernel(val, weight=0.5):
+    if _flip(0.1):
+        return val
     return not val
 
 def _flip_kernel_prob(new_val, val, weight=0.5):
     if new_val == (not val):
-        return 1.0
-    return 0.0
+        return 0.9
+    return 0.1
 
 @erp
 @prob(_flip_pmf)

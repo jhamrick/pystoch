@@ -18,6 +18,7 @@ def _hist(samples):
     return binkeys, binvals
 
 def hist(samples, title):
+    plt.figure()
     binkeys, binvals = _hist(samples)
     
     width = 0.8
@@ -30,7 +31,7 @@ def hist(samples, title):
     plt.axis([left[0] - (width / 2.0), left[-1] + (3.0 * (width / 2.0)), 0, np.sum(height)])
     plt.show()
 
-def print_hist(samples, title):
+def print_hist(samples):
     binkeys, binvals = _hist(samples)
 
     for key, val in zip(binkeys, binvals):
