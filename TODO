@@ -1,0 +1,9 @@
+- memoization
+- test cases
+- add in support for lambdas
+- add in support for generators
+- add in support for everything else in the ast module
+- upgrade to Python 3.0, or at least Python 2.7?
+- examine the profile and try to speed up execution
+- add option to specify initial conditions for MetropolisHastings
+- lazy evaluation?
