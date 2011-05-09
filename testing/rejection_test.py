@@ -1,9 +1,11 @@
-from queries import MetropolisHastings
-from erps import flip
-from graphing import hist
+import pystoch
+from pystoch.queries import RejectionQuery
+from pystoch.erps import flip
+from pystoch.graphing import hist
+
 import numpy as np
 
-class ShortTest(MetropolisHastings):
+class ShortTest(RejectionQuery):
 
     def __init__(self):
         self.A = None
@@ -25,7 +27,7 @@ class ShortTest(MetropolisHastings):
         return self.D >= 2
 
 query = ShortTest()
-samples = query.run(100, 100)
+samples = [query.run() for x in xrange(100)]
 
 print samples
 print np.mean(samples)
