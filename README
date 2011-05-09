@@ -1,0 +1,36 @@
+PyStoch: Stochastic Python
+--------------------------
+
+Installation
+------------
+
+Run the following command, replacing "your/path/pystoch" with the
+desired location for the repository:
+
+> git clone https://github.com/jhamrick/pystoch.git your/path/pystoch
+
+And add the following lines to your ~/.bashrc:
+
+export PATH="your/path/pystoch/bin:$PATH"
+export PYTHONPATH="your/path/pystoch/src:$PYTHONPATH"
+
+Running
+-------
+
+To run a PyStoch program:
+
+> pystoch yourprogram.py
+
+or
+
+> pystoch yourprogram.pystoch
+
+To compile a PyStoch program "yourprogram.py" to "yourprogram.pystoch":
+
+> pystoch_compile yourprogram.py
+
+
+Links
+-----
+http://projects.csail.mit.edu/church/wiki/Church
+http://dev.pocoo.org/hg/sandbox/file/98ce1ce17c7c/ast/codegen.py
