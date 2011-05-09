@@ -360,49 +360,6 @@ def gaussian(mean, std):
 
     return _gaussian(mean, std)
 
-def _log_flip_pmf(x, weight=-0.69314718055994529):
-    """The probability mass at x for a log-weighted coin flip.
-
-    """
-    
-    if x:
-        return np.e ** weight
-    else:
-        return 1 - (np.e ** weight)
-
-def _log_flip(weight=-0.69314718055994529):
-    if weight > 0:
-        raise ValueError, "weight must be less than or equal to 0"
-    
-    return flip(np.e ** weight)
-
-def _log_flip_kernel(val, weight=-0.69314718055994529):
-    return not val
-
-def _log_flip_kernel_prob(new_val, val, weight=-0.69314718055994529):
-    if new_val == (not val):
-        return 1.0
-    return 0.0
-
-@erp
-@prob(_log_flip_pmf)
-@kernel(_log_flip_kernel, _log_flip_kernel_prob)
-def log_flip(weight=-0.69314718055994529):
-    """Flip a fair or biased coin.
-
-    Given the weight, flip a coin with weight e ** weight and return
-    True if it comes up heads and False if it comes up tails.  If
-    weight is not specified, then a fair coin is flipped.
-
-    Parameters
-    ----------
-    weight : float, optional
-        The weight of the coin, <= 0
-
-    """
-
-    return _log_flip(weight)
-
 def _poisson_pmf(x, lam):
     """The probability mass at x for the poisson distribution with parameter `lam`.
 
