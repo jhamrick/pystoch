@@ -86,4 +86,4 @@ print "\tTime:   %s seconds" % secs
 print
 
 discrete_hist(samples, "Joint Inferences for Lung Cancer and TB",
-              path="../../../test3.pdf")
+              path="../../../graphs/test3.pdf")
