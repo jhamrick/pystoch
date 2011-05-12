@@ -364,6 +364,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         class CountCalls(NodeCounter):
             def visit_Call(self, node):
                 total = 1
+                total += self.visit(node.func)
                 for arg in node.args:
                     total += self.visit(arg)
                 for keyword in node.keywords:
@@ -401,7 +402,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         return CountListComps().visit(node)
 
-    def should_rewrite(self, node, threshold=1):
+    def should_rewrite(self, node, threshold=1, lcthreshold=0):
         """Checks whether or not a node (_ast.AST) contains more than
         the minimum number of Call nodes and ListComps (though
         ListComps are only counted once, if they have more ListComps
@@ -425,7 +426,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         ctotal = self._count_calls(node)
         lctotal = self._count_listcomps(node)
-        return (ctotal + lctotal) > threshold
+        return (ctotal > threshold) or (lctotal > lcthreshold)
 
     def contains_return(self, node):
         """Checks whether or not a node (_ast.AST) contains any Return nodes.
@@ -480,6 +481,13 @@ class PyStochCompiler(codegen.SourceGenerator):
 
             def visit_Call(self, node):
                 if self.done: return node
+
+                # check function
+                new = self.visit(node.func)
+                if new != node.func:
+                    node.func = new
+                    self.done = True
+                    return node
 
                 # check arguments
                 for arg in xrange(len(node.args)):
@@ -554,12 +562,10 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        rw = self.should_rewrite(node, threshold=threshold) or \
-             self._count_listcomps(node) > lcthreshold
+        rw = self.should_rewrite(node, threshold=threshold, lcthreshold=lcthreshold)
         while rw:
             node = self._extract(node)
-            rw = self.should_rewrite(node, threshold=threshold) or \
-                 self._count_listcomps(node) > lcthreshold
+            rw = self.should_rewrite(node, threshold=threshold, lcthreshold=lcthreshold)
 
         return node
 
@@ -692,7 +698,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # do Call/ListComp extraction on the node's value
         node.value = self.extract(node.value, lcthreshold=1)
-
+        
         # if the value is a list comprehension, the we need to handle
         # it specially
         if isinstance(node.value, _ast.ListComp):
