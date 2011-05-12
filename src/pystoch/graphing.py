@@ -1,38 +1,136 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+import scipy.stats
 
-def _hist(samples):
+def _discrete_hist(samples, binkeys=None):
     bins = {}
     for sample in samples:
-        if str(sample) not in bins:
-            bins[str(sample)] = 0
-        bins[str(sample)] += 1
+        if sample not in bins:
+            bins[sample] = 0
+        bins[sample] += 1
 
-    binkeys = bins.keys()
-    binkeys.sort()
+    if binkeys is None:
+        binkeys = bins.keys()
+        binkeys.sort()
 
     binvals = []
     for key in binkeys:
-        binvals.append(bins[key])
+        if key in bins:
+            binvals.append(bins[key])
+        else:
+            binvals.append(0)
 
     return binkeys, binvals
 
-def hist(samples, title):
-    plt.figure()
-    binkeys, binvals = _hist(samples)
-    
-    width = 0.8
-    left = np.arange(len(binkeys))
-    height = binvals
+def discrete_hist(samples, title, labels=None, ymax=None, path=None):
+    samps = np.array(samples)
+    if len(samps.shape) > 2:
+        raise ValueError, "invalid size of input array"
+    num_bars = samps.shape[0]
 
-    plt.bar(left, height, width)
+    overall_width = 0.8
+    colors = ['b', 'g', 'r', 'c', 'm', 'y']
+
+    all_binkeys = set()
+    for bar in xrange(num_bars):
+        binkeys, binvals = _discrete_hist(samps[bar])
+        all_binkeys = all_binkeys.union(binkeys)
+    all_binkeys = list(all_binkeys)
+    all_binkeys.sort()
+
+    max_height = 0
+
+    for bar in xrange(num_bars):
+        binkeys, binvals = _discrete_hist(samps[bar], all_binkeys)
+        
+        width = overall_width / num_bars
+        left = np.arange(len(binkeys)) + (width * bar)
+        height = binvals
+
+        if np.max(height) > max_height:
+            max_height = np.max(height)
+
+        kwargs = {}
+        kwargs['color'] = colors[bar%len(colors)]
+        if labels is not None:
+            kwargs['label'] = labels[bar]
+
+        plt.bar(left, height, width, **kwargs)
+
+    left = np.arange(len(all_binkeys))
+    if ymax is None:
+        ymax = max_height * 1.10
+        
     plt.title(title)
-    plt.xticks(left + (width / 2.0), binkeys)
-    plt.axis([left[0] - (width / 2.0), left[-1] + (3.0 * (width / 2.0)), 0, np.sum(height)])
-    plt.show()
+    plt.legend()
+    plt.xticks(np.arange(len(all_binkeys)) + (overall_width / 2.0), all_binkeys)
+    plt.axis([left[0] - (overall_width / 2.0), left[-1] + (3.0 * (overall_width / 2.0)), 0, ymax])
 
-def print_hist(samples):
-    binkeys, binvals = _hist(samples)
+    ax = plt.gca()
+    ax.grid(True)
+    ax.set_axisbelow(True)
+
+    if path is None:
+        plt.show()
+    else:
+        save(path)
+
+def cont_hist(samples, title, numbins=None, labels=None, ymax=None, path=None):
+    samps = np.array(samples)
+    if len(samps.shape) > 2:
+        raise ValueError, "invalid size of input array"
+    num_bars = samps.shape[0]
+
+    colors = ['b', 'g', 'r', 'c', 'm', 'y']
+
+    minval = np.min(samps)
+    maxval = np.max(samps)
+
+    kwargs = {}
+    if numbins is None:
+        kwargs['bins'] = samps.shape[1] / 20
+    else:
+        kwargs['bins'] = numbins
+    kwargs['range'] = (minval, maxval)
+    if labels is not None:
+        kwargs['label'] = labels
+    plt.hist(samps.transpose(), **kwargs)
+    plt.title(title)
+    plt.legend()
+        
+    ax = plt.gca()
+    ax.grid(True)
+    ax.set_axisbelow(True)
+
+    if path is None:
+        plt.show()
+    else:
+        save(path)
+        
+def print_discrete_hist(samples):
+    binkeys, binvals = _discrete_hist(samples)
 
     for key, val in zip(binkeys, binvals):
         print "%s\t%s" % (key, val)
+
+# save a figure from pyplot
+def save(path, width=16.5, height=16.5):
+    fig = plt.gcf()
+    fig.set_figwidth(width)
+    fig.set_figheight(height)
+
+    directory = os.path.split(path)[0]
+    filename = os.path.split(path)[1]
+    if directory == '':
+        directory = '.'
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    print "Saving figure to '" + os.path.join(directory, filename) + "'...", 
+    plt.savefig(os.path.join(directory, filename))
+    plt.clf()
+    plt.cla()
+    plt.close()
+    print "Done"

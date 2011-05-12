@@ -231,7 +231,7 @@ def _gamma(k, theta):
     if theta <= 0:
         raise ValueError, "theta must be greater than 0"
     
-    return np.random.gamma(shape, scale)
+    return np.random.gamma(k, theta)
 
 def _gamma_kernel(val, k, theta):
     return _gamma(k, theta)
@@ -286,7 +286,7 @@ def gamma(k, theta):
 
     """
 
-    return _gamma(k, thetat)
+    return _gamma(k, theta)
 
 def _gaussian_pdf(x, mean, std):
     """The probability density at x for the gaussian distribution with
@@ -301,7 +301,7 @@ def _gaussian_pdf(x, mean, std):
     return dists.norm.pdf(x, loc=mean, scale=std)
 
 def _gaussian(mean, std):
-    return np.random.normal(mu, sigma)
+    return np.random.normal(mean, std)
 
 def _gaussian_kernel(val, mean, std):
     return _gaussian(mean, std)
@@ -312,6 +312,7 @@ def _gaussian_kernel_prob(new_val, val, mean, std):
 @erp
 @continuous
 @prob(_gaussian_pdf)
+@kernel(_gaussian_kernel, _gaussian_kernel_prob)
 def gaussian(mean, std):
     """Draw a random sample from a normal (Gaussian) distribution.
     

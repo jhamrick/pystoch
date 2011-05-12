@@ -1,10 +1,11 @@
 import pystoch
 from pystoch.queries import RejectionQuery, MetropolisHastings
 from pystoch.erps import binomial
-from pystoch.graphing import hist, print_hist
+from pystoch.graphing import discrete_hist
 
 import datetime
 import numpy as np
+import scipy.stats
 
 class Test(object):
 
@@ -28,7 +29,7 @@ class TestMetropolisHastings(MetropolisHastings, Test):
     def __init__(self):
         Test.__init__(self)
 
-num_samples = 100
+num_samples = 1000
 
 print "Running rejection query..."
 before = datetime.datetime.now()
@@ -52,5 +53,7 @@ secs = np.round(secs, decimals=2)
 print "\tResult: %s" % np.mean(samples2)
 print "\tTime:   %s seconds" % secs
 
-hist(samples1, "rejection")
-hist(samples2, "mh")
+discrete_hist(np.array([samples1, samples2]), "Binomial Distribution (n=20, p=0.8)",
+              labels=["RejectionQuery",
+                      "MetropolisHastings"],
+              path="../../../graphs/binomial.pdf")

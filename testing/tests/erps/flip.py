@@ -1,7 +1,7 @@
 import pystoch
 from pystoch.queries import RejectionQuery, MetropolisHastings
 from pystoch.erps import flip
-from pystoch.graphing import hist, print_hist
+from pystoch.graphing import discrete_hist
 
 import datetime
 import numpy as np
@@ -40,16 +40,19 @@ secs = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10.0**6
 secs = np.round(secs, decimals=2)
 print "\tResult: %s" % np.mean(samples1)
 print "\tTime:   %s seconds" % secs
-print_hist(samples1)
 
 print "Running metropolis hastings..."
 before = datetime.datetime.now()
 query2 = TestMetropolisHastings()
-samples2 = query2.run(num_samples, 100)
+samples2 = query2.run(num_samples, 10)
 after = datetime.datetime.now()
 td = after - before
 secs = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10.0**6
 secs = np.round(secs, decimals=2)
 print "\tResult: %s" % np.mean(samples2)
 print "\tTime:   %s seconds" % secs
-print_hist(samples2)
+
+discrete_hist(np.array([samples1, samples2]), "Flip (weight=0.5)",
+              labels=["RejectionQuery",
+                      "MetropolisHastings"],
+              path="../../../graphs/flip.pdf")
