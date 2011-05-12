@@ -25,6 +25,8 @@ def _discrete_hist(samples, binkeys=None):
 
 def discrete_hist(samples, title, labels=None, ymax=None, path=None):
     samps = np.array(samples)
+    if len(samps.shape) == 1:
+        samps = samps[None, ...]
     if len(samps.shape) > 2:
         raise ValueError, "invalid size of input array"
     num_bars = samps.shape[0]
@@ -63,7 +65,8 @@ def discrete_hist(samples, title, labels=None, ymax=None, path=None):
         ymax = max_height * 1.10
         
     plt.title(title)
-    plt.legend()
+    if labels is not None:
+        plt.legend()
     plt.xticks(np.arange(len(all_binkeys)) + (overall_width / 2.0), all_binkeys)
     plt.axis([left[0] - (overall_width / 2.0), left[-1] + (3.0 * (overall_width / 2.0)), 0, ymax])
 
@@ -76,7 +79,7 @@ def discrete_hist(samples, title, labels=None, ymax=None, path=None):
     else:
         save(path)
 
-def cont_hist(samples, title, numbins=None, labels=None, ymax=None, path=None):
+def cont_hist(samples, title, numbins=20, labels=None, ymax=None, path=None):
     samps = np.array(samples)
     if len(samps.shape) > 2:
         raise ValueError, "invalid size of input array"
@@ -88,10 +91,7 @@ def cont_hist(samples, title, numbins=None, labels=None, ymax=None, path=None):
     maxval = np.max(samps)
 
     kwargs = {}
-    if numbins is None:
-        kwargs['bins'] = samps.shape[1] / 20
-    else:
-        kwargs['bins'] = numbins
+    kwargs['bins'] = numbins
     kwargs['range'] = (minval, maxval)
     if labels is not None:
         kwargs['label'] = labels

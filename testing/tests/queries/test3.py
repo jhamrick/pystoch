@@ -1,7 +1,7 @@
 import pystoch
 from pystoch.queries import RejectionQuery, MetropolisHastings
 from pystoch.erps import flip
-from pystoch.graphing import print_hist
+from pystoch.graphing import discrete_hist
 
 import numpy as np
 import datetime
@@ -27,7 +27,7 @@ import pdb
 #       )
 #  )
 
-class Test(object):
+class Test(MetropolisHastings):
 
     def __init__(self):
         self.lung_cancer = None
@@ -72,14 +72,12 @@ class Test(object):
     def condition(self):
         return self.cough and self.fever and self.chest_pain and self.shortness_of_breath
 
-class TestMetropolisHastings(MetropolisHastings, Test):
-    def __init__(self):
-        Test.__init__(self)
+num_samples = 1000
 
 print "Running metropolis hastings..."
 before = datetime.datetime.now()
-query2 = TestMetropolisHastings()
-samples2 = query2.run(100, 100)
+query = Test()
+samples = [str(samp) for samp in query.run(num_samples, 100)]
 after = datetime.datetime.now()
 td = after - before
 secs = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10.0**6
@@ -87,4 +85,5 @@ secs = np.round(secs, decimals=2)
 print "\tTime:   %s seconds" % secs
 print
 
-print_hist(samples2, "Joint Inferences for Lung Cancer and TB")
+discrete_hist(samples, "Joint Inferences for Lung Cancer and TB",
+              path="../../../test3.pdf")

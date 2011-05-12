@@ -1,7 +1,7 @@
 import pystoch
 from pystoch.queries import RejectionQuery, MetropolisHastings
 from pystoch.erps import flip
-from pystoch.graphing import hist
+from pystoch.graphing import discrete_hist
 
 import numpy as np
 import datetime
@@ -65,10 +65,12 @@ class TestMetropolisHastings(MetropolisHastings):
     def condition(self):
         return self.D >= 2
 
+num_samples = 1000
+
 print "Running rejection query..."
 before = datetime.datetime.now()
 query1 = TestRejectionQuery()
-samples1 = [query1.run() for x in xrange(100)]
+samples1 = [query1.run() for x in xrange(num_samples)]
 after = datetime.datetime.now()
 td = after - before
 secs = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10.0**6
@@ -79,10 +81,15 @@ print "\tTime:   %s seconds" % secs
 print "Running metropolis hastings..."
 before = datetime.datetime.now()
 query2 = TestMetropolisHastings()
-samples2 = query2.run(100, 100)
+samples2 = query2.run(num_samples, 100)
 after = datetime.datetime.now()
 td = after - before
 secs = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10.0**6
 secs = np.round(secs, decimals=2)
 print "\tResult: %s" % np.mean(samples2)
 print "\tTime:   %s seconds" % secs
+
+discrete_hist(np.array([samples1, samples2]), "Probability that A=1 Given that D>=2",
+              labels=["RejectionQuery",
+                      "MetropolisHastings"],
+              path="../../../graphs/test1.pdf")
