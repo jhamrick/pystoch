@@ -476,3 +476,23 @@ def uniform(low, high):
     """
     
     return _uniform(low, high)
+
+def _uniform_draw_pmf(x, values):
+    return 1.0 / len(values)
+
+def _uniform_draw(values):
+    idx = np.random.randint(len(values))
+    return values[idx]
+
+def _uniform_draw_kernel(val, values):
+    return _uniform_draw(values)
+
+def _uniform_draw_kernel_prob(new_val, val, values):
+    return _uniform_draw_pmf(new_val, values)
+
+@erp
+@continuous
+@prob(_uniform_draw_pmf)
+@kernel(_uniform_draw_kernel, _uniform_draw_kernel_prob)
+def uniform_draw(values):
+    return _uniform_draw(values)
