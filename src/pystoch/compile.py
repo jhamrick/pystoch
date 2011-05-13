@@ -696,12 +696,10 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        # do Call/ListComp extraction on the node's value
-        node.value = self.extract(node.value, lcthreshold=1)
-        
         # if the value is a list comprehension, the we need to handle
         # it specially
         if isinstance(node.value, _ast.ListComp):
+            node.value = self.extract(node.value, lcthreshold=1)
             iden = self.visit_ListComp(node.value)
             node = ast.Assign(
                 value = ast.parse(iden).body[0].value,
@@ -711,6 +709,10 @@ class PyStochCompiler(codegen.SourceGenerator):
                  isinstance(node.value, _ast.List) or \
                  isinstance(node.value, _ast.Tuple):
             node.value = self.extract(node.value, threshold=0)
+
+        else:
+            # do Call/ListComp extraction on the node's value
+            node.value = self.extract(node.value, lcthreshold=0)
         
         return super(PyStochCompiler, self).visit_Assign(node)
 

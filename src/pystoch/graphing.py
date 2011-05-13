@@ -85,8 +85,6 @@ def cont_hist(samples, title, numbins=20, labels=None, ymax=None, path=None):
         raise ValueError, "invalid size of input array"
     num_bars = samps.shape[0]
 
-    colors = ['b', 'g', 'r', 'c', 'm', 'y']
-
     minval = np.min(samps)
     maxval = np.max(samps)
 
@@ -97,8 +95,33 @@ def cont_hist(samples, title, numbins=20, labels=None, ymax=None, path=None):
         kwargs['label'] = labels
     plt.hist(samps.transpose(), **kwargs)
     plt.title(title)
-    plt.legend()
+    if labels is not None:
+        plt.legend()
         
+    ax = plt.gca()
+    ax.grid(True)
+    ax.set_axisbelow(True)
+
+    if path is None:
+        plt.show()
+    else:
+        save(path)
+
+def line_plot(x, y, title, labels=None, path=None):
+
+    xmin = np.min(x)
+    ymin = np.min(y)
+    xmax = np.max(x)
+    ymax = np.max(y)
+
+    kwargs = {}
+    if labels is not None:
+        kwargs['label'] = labels
+    plt.plot(x, y, **kwargs)
+    plt.title(title)
+    if labels is not None:
+        plt.legend()
+
     ax = plt.gca()
     ax.grid(True)
     ax.set_axisbelow(True)

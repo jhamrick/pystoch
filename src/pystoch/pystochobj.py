@@ -1,5 +1,6 @@
 from stack import Stack
 import numpy as np
+from pystoch.exceptions import TraceInvalidatedException
 
 class PyStochObj(object):
     """pystoch.PyStochObj
@@ -202,10 +203,8 @@ class PyStochObj(object):
                 # rescore the log likelihood by drawing from the
                 # probability density/mass function for the ERP
                 erp_loglh = np.log(erp_curr.prob(val, *args_curr[0], **args_curr[1]))
-                # store the new log likelihood (plus trace marger) in the database
-                self.db[name] = (erp_curr, val, erp_loglh, args_curr, self.curr_trace)
-                # update the total log likelihood of the trace
-                self.trace_loglh += erp_loglh
+                if erp_loglh == -np.inf:
+                    raise TraceInvalidatedException()
 
         # if the erp type changed, then we need to resample
         else:

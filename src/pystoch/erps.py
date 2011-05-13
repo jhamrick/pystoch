@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.stats.distributions as dists
+import pdb
 
 def erp(func):
     func.erp = True
@@ -185,14 +186,14 @@ def _flip(weight=0.5):
     return np.random.uniform(0, 1) <= weight
 
 def _flip_kernel(val, weight=0.5):
-    if _flip(0.1):
+    if _flip(0.01):
         return val
     return not val
 
 def _flip_kernel_prob(new_val, val, weight=0.5):
     if new_val == (not val):
-        return 0.9
-    return 0.1
+        return 0.99
+    return 0.01
 
 @erp
 @prob(_flip_pmf)
@@ -477,22 +478,56 @@ def uniform(low, high):
     
     return _uniform(low, high)
 
-def _uniform_draw_pmf(x, values):
-    return 1.0 / len(values)
+def _sample_integer_pmf(x, low, high):
+    if x < low or x >= high:
+        return 0.0
+    return 1.0 / (high - low)
 
-def _uniform_draw(values):
-    idx = np.random.randint(len(values))
-    return values[idx]
+def _sample_integer(low, high):
+    val = np.random.randint(low, high)
+    return val
 
-def _uniform_draw_kernel(val, values):
-    return _uniform_draw(values)
+def _sample_integer_kernel(val, low, high):
+    # if val < low or val >= high:
+    #     return None
+    # if _flip(0.01):
+    #     return _sample_integer(low, high)
+    # else:
+    #     idx = _sample_integer(low, high-1)
+    #     if idx >= val:
+    #         return idx + 1
+    #     return idx
 
-def _uniform_draw_kernel_prob(new_val, val, values):
-    return _uniform_draw_pmf(new_val, values)
+    return _sample_integer(low, high)
+
+def _sample_integer_kernel_prob(new_val, val, low, high):
+    # if val < low or val >= high:
+    #     return 0.0
+    
+    # if new_val == val:
+    #     return 0.01 * _sample_integer_pmf(new_val, low, high)
+
+    # return (0.01 * _sample_integer_pmf(new_val, low, high)) + \
+    #        (0.99 * (1.0 / (high - low -1)))
+
+    return _sample_integer_pmf(new_val, low, high)
 
 @erp
-@continuous
-@prob(_uniform_draw_pmf)
-@kernel(_uniform_draw_kernel, _uniform_draw_kernel_prob)
-def uniform_draw(values):
-    return _uniform_draw(values)
+@prob(_sample_integer_pmf)
+@kernel(_sample_integer_kernel, _sample_integer_kernel_prob)
+def sample_integer(low, high):
+    return _sample_integer(low, high)
+
+def uniform_draw(values, PYSTOCHOBJ=None):
+    # PYSTOCHOBJ.func_stack.push('UNIFORM_DRAW')
+    # PYSTOCHOBJ.line_stack.push(0)
+    # PYSTOCHOBJ.line_stack.set(1)
+    # PYSTOCHID_fefd3a17 = PYSTOCHOBJ.call(len, values)
+    # PYSTOCHOBJ.line_stack.set(2)
+    # idx = PYSTOCHOBJ.call(sample_integer, 0, PYSTOCHID_fefd3a17)
+    # PYSTOCHOBJ.line_stack.pop()
+    # PYSTOCHOBJ.func_stack.pop()
+    # return values[idx]
+    idx = PYSTOCHOBJ.call(sample_integer, 0, len(values))
+    return values[idx]
+uniform_draw.random = True
