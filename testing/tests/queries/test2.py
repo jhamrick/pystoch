@@ -70,7 +70,7 @@ print "\tResult: %s" % np.mean(samples2)
 print "\tTime:   %s seconds" % secs
 
 
-discrete_hist(np.array([samples1, samples2]), "Probability of Breast Cancer Given a Positive Mammogram",
+discrete_hist(np.array([samples1, samples2]), "Probability of Breast Cancer\nGiven a Positive Mammogram",
               labels=["RejectionQuery",
                       "MetropolisHastings"],
               path="../../../graphs/test2.pdf")

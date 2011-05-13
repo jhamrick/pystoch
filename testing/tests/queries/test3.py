@@ -85,5 +85,5 @@ secs = np.round(secs, decimals=2)
 print "\tTime:   %s seconds" % secs
 print
 
-discrete_hist(samples, "Joint Inferences for Lung Cancer and TB",
+discrete_hist(samples, "Joint Inferences for\nLung Cancer and TB",
               path="../../../graphs/test3.pdf")
