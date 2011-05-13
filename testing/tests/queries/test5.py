@@ -63,7 +63,7 @@ class Test(MetropolisHastings):
     def condition(self):
         return self.observations == self.data
 
-num_samples = 100
+num_samples = 1000
 num_steps = 10
 x = np.arange(1, 8, 2)
 y = np.zeros([4])
@@ -77,4 +77,4 @@ for i in xrange(1, 8, 2):
 
 print x
 print y
-line_plot(x, y, "Probability of Hypothesis Big")
+line_plot(x, y, "Probability of Hypothesis Big", path="../../../graphs/test5.pdf")

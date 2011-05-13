@@ -95,9 +95,6 @@ class MetropolisHastings(object):
                 # propose a new value using the erp's proposal kernel
                 new_val = erp.kernel(val, *args_db[0], **args_db[1])
 
-                if new_val == val:
-                    continue
-
                 # using the proposed value, calculate the forward and
                 # backward probability, as well as the log likelihood
                 # for that probability

@@ -186,14 +186,14 @@ def _flip(weight=0.5):
     return np.random.uniform(0, 1) <= weight
 
 def _flip_kernel(val, weight=0.5):
-    if _flip(0.01):
+    if _flip(0.1):
         return val
     return not val
 
 def _flip_kernel_prob(new_val, val, weight=0.5):
     if new_val == (not val):
-        return 0.99
-    return 0.01
+        return 0.9
+    return 0.1
 
 @erp
 @prob(_flip_pmf)
@@ -488,28 +488,9 @@ def _sample_integer(low, high):
     return val
 
 def _sample_integer_kernel(val, low, high):
-    # if val < low or val >= high:
-    #     return None
-    # if _flip(0.01):
-    #     return _sample_integer(low, high)
-    # else:
-    #     idx = _sample_integer(low, high-1)
-    #     if idx >= val:
-    #         return idx + 1
-    #     return idx
-
     return _sample_integer(low, high)
 
 def _sample_integer_kernel_prob(new_val, val, low, high):
-    # if val < low or val >= high:
-    #     return 0.0
-    
-    # if new_val == val:
-    #     return 0.01 * _sample_integer_pmf(new_val, low, high)
-
-    # return (0.01 * _sample_integer_pmf(new_val, low, high)) + \
-    #        (0.99 * (1.0 / (high - low -1)))
-
     return _sample_integer_pmf(new_val, low, high)
 
 @erp
@@ -519,15 +500,6 @@ def sample_integer(low, high):
     return _sample_integer(low, high)
 
 def uniform_draw(values, PYSTOCHOBJ=None):
-    # PYSTOCHOBJ.func_stack.push('UNIFORM_DRAW')
-    # PYSTOCHOBJ.line_stack.push(0)
-    # PYSTOCHOBJ.line_stack.set(1)
-    # PYSTOCHID_fefd3a17 = PYSTOCHOBJ.call(len, values)
-    # PYSTOCHOBJ.line_stack.set(2)
-    # idx = PYSTOCHOBJ.call(sample_integer, 0, PYSTOCHID_fefd3a17)
-    # PYSTOCHOBJ.line_stack.pop()
-    # PYSTOCHOBJ.func_stack.pop()
-    # return values[idx]
     idx = PYSTOCHOBJ.call(sample_integer, 0, len(values))
     return values[idx]
 uniform_draw.random = True
