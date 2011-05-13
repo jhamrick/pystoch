@@ -84,8 +84,6 @@ class MetropolisHastings(object):
                 num_rvs = PYSTOCHOBJ.num_rvs
                 rvs = PYSTOCHOBJ.rvs
 
-                print rvs
-                
                 # uniformly select a random choice
                 name = rvs[np.random.randint(num_rvs)]
                 
@@ -152,6 +150,11 @@ class MetropolisHastings(object):
                     db = self.clean_db(trace, db)
                     
                     num_accepted += 1
+
+                else:
+
+                    PYSTOCHOBJ.rvs = rvs
+                    PYSTOCHOBJ.num_rvs = num_rvs
                     
                 # update the number of steps we have to go
                 steps -= 1

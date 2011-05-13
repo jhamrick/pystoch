@@ -256,7 +256,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.write("PYSTOCHOBJ.line_stack.set(%s)" % self.line.peek())
         super(PyStochCompiler, self).newline(node=node, extra=extra)
 
-    def body(self, statements, write_before=None, write_after=None, is_classdef=False):
+    def body(self, statements, write_before=None, write_after=None):
         """Write the body statements.
 
         This is the same as the SourceGenerator body function, with
@@ -293,9 +293,6 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # decrement the level of indentation
         self.indentation -= 1
-
-        if is_classdef:
-            self.line.pop()
                     
     def body_or_else(self, node, write_before=None, write_after=None):
         """Write a body as well as an else statement, if it exists.
@@ -609,9 +606,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.infunc = True
         self.body(node.body, write_before=write_before, write_after=write_after)
         self.infunc = infunc
-
-        if not self.contains_return(node):
-            self.line.pop()
+        self.line.pop()
 
         self.insert("%s.random = True" % node.name)
 
@@ -643,7 +638,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         inclass = self.inclass
         self.inclass = True
-        self.body(node.body, write_before=write_before, is_classdef=True)
+        self.body(node.body, write_before=write_before)
         self.write('\n')
         self.inclass = inclass
 
