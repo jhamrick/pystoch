@@ -1,0 +1,53 @@
+#!/usr/bin/python
+
+import pystoch
+from pystoch import RejectionQuery, MetropolisHastings
+
+import numpy as np
+
+class TestFailedException(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __repr__(self):
+        return self.msg
+
+def check_test(data, expectation_func, true_expectation, tolerance, name):
+    print "inference test: %s" % name,
+    estimates = []
+    errors = []
+    for run, expectation in zip(data, true_expectation):
+        estimate = np.mean([expectation_func(sample) for sample in run])
+        error = np.abs(estimate - expectation)
+        estimates.append(estimate)
+        errors.append(error)
+
+    mean_abs_error = np.mean(errors)
+    std_error = np.std(errors)
+
+    if mean_abs_error > tolerance:
+        print "... failed!"
+        msg = "true expectation: %, test mean: %s" % \
+              (true_expectation, np.mean(estimates))
+        raise TestFailedException(msg)
+        
+    else:
+        print "... passed."
+
+def equal_test(name, test_val, true_val):
+    print "deterministic test: %s" % name,
+    if test_val != true_val:
+        print "... failed!"
+        msg = "true value: %s, test value: %s" % \
+              (test_val, true_val)
+        raise TestFailedException(msg)
+    
+    else:
+        print "... passed."
+
+#####################################################
+
+SAMPLES = 150
+LAG = 20
+RUNS = 5
+TOLERANCE = 0.07

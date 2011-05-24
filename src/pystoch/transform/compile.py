@@ -16,9 +16,9 @@ import hashlib
 import os
 import sys
 
-from ..utilities.stack import Stack
-from . import ast
-from . import codegen
+from pystoch.utilities.stack import Stack
+import ast
+import codegen
 
 if sys.version_info[:2] != (2, 6):
     raise NotImplementedError, "PyStoch currently only supports Python 2.6"
@@ -1142,7 +1142,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        raise NotImplementedError, visit_GeneratorExp.__doc__
+        raise NotImplementedError, self.visit_GeneratorExp.__doc__
 
     def visit_Yield(self, node):
         """Rewrite the Yield visitor function to extract calls/list

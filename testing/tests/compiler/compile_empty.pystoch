@@ -1,5 +1,0 @@
-MODULE_STACK.push('PYSTOCHID')
-LINE_STACK.push(0)
-
-LINE_STACK.pop()
-MODULE_STACK.pop()

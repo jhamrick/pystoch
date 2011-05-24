@@ -1,68 +1,87 @@
 #!/usr/bin/python
 
 import pystoch
-import pystoch.compile as c
 import os
 import re
+import datetime
+import traceback
 
+def to_seconds(td):
+    return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) \
+           / 10.0**6
+
+# get a list of all of the tests
 testfiles = [os.path.join("tests", test) for test in os.listdir("tests") \
-             if test.endswith(".py") and test.startswith("compile_")]
-resultfiles = [os.path.join("tests", test) for test in os.listdir("tests") \
-               if test.endswith(".pystoch") and test.startswith("compile_")]
+             if test.endswith(".py")]
 
+# read all of the tests in and stick the code in a dictionary
 tests = {}
 for testfile in testfiles:
-    front = len("compile_")
     back = len(".py")
-    name = os.path.basename(testfile)[front:-back]
-    tests[name] = open(testfile, "r").read()
+    name = os.path.basename(testfile)[:-back]
+    tests[name] = testfile
 
-results = {}
-for resultfile in resultfiles:
-    front = len("compile_")
-    back = len(".pystoch")
-    name = os.path.basename(resultfile)[front:-back]
-    results[name] = open(resultfile, "r").read()
-
-teststorun = list(set(tests.keys()).intersection(set(results.keys())))
-print "Tests: %s" % ", ".join(teststorun)
+print "Tests: %s" % ", ".join(tests.keys())
 print
 
 passed = []
 failed = []
-for totest in teststorun:
+for testname in tests:
     print "-----------------------------------------------"
-    print "*** Running '%s' test... ***" % totest
+    print "*** Running '%s' test... ***" % testname
     print "-----------------------------------------------"
 
-    test = tests[totest]
-    result = re.sub(r'PYSTOCHID_[a-z0-9]{8}', 
-                    r'PYSTOCHID',
-                    c.pystoch_compile(tests[totest]))
-    exresult = results[totest]
+    test = tests[testname]
+
+    # test the python code
+    before = datetime.datetime.now()
+    try:
+        execfile(test)
+    except:
+        traceback.print_exc(limit=5)
+        print 'FAILED\n'
+        continue
+        
+    pythonlocals = locals()
+    after = datetime.datetime.now()
+    pythontime = to_seconds(after-before)
+    pythonresult = pythonlocals['result']
+
+    # run the python code as pystoch code
+    before = datetime.datetime.now()
+    try:
+        pystochlocals = pystoch.run(test)
+    except:
+        traceback.print_exc(limit=5)
+        print 'FAILED\n'
+        continue
+        
+    after = datetime.datetime.now()
+    pystochtime = to_seconds(after-before)
+    pystochresult = pystochlocals['result']
 
     def indent(src):
         return "\n".join(["\t" + line for line in src.split("\n")])
         
-    print "TEST"
-    print indent(test)
-    print "RESULT"
-    print indent(result)
-    print "EXPECTED RESULT"
-    print indent(exresult)
+    print "Python Result  : %s" % pythonresult
+    print "PyStoch Result : %s" % pystochresult
+    print
+    print "Python Time    : %s seconds" % pythontime
+    print "PyStoch Time   : %s seconds" % pystochtime
+    print
         
-    if result != exresult:
+    if pythonresult != pystochresult:
         print "FAILED"
-        failed.append(totest)
+        failed.append(testname)
     else:
         print "PASSED"
-        passed.append(totest)
+        passed.append(testname)
 
     print
 
 print "-----------------------------------------------"
 print
-print "Tests passed: %s/%s" % (len(passed), len(teststorun))
-print "Tests failed: %s/%s" % (len(failed), len(teststorun))
+print "Tests passed: %s/%s" % (len(passed), len(tests))
+print "Tests failed: %s/%s" % (len(failed), len(tests))
 print
 print "Failed tests: %s" % ", ".join(failed)
