@@ -2,6 +2,23 @@
 
 import os
 
+def print_results(name, exresult, extime, result, time, failed):
+    print "-----------------------------------------------"
+    print "*** Running '%s' test... ***" % name
+    print "-----------------------------------------------"
+
+    print "Python Result  : %s" % exresult
+    print "PyStoch Result : %s" % result
+    print
+    print "Python Time    : %s seconds" % extime
+    print "PyStoch Time   : %s seconds" % time
+    print
+
+    if failed:
+        print "FAILED"
+    else:
+        print "PASSED"
+
 tests = []
 passed = []
 failed = []

@@ -34,17 +34,6 @@ def check_test(data, expectation_func, true_expectation, tolerance, name):
     else:
         print "... passed."
 
-def equal_test(name, test_val, true_val):
-    print "deterministic test: %s" % name,
-    if test_val != true_val:
-        print "... failed!"
-        msg = "true value: %s, test value: %s" % \
-              (test_val, true_val)
-        raise TestFailedException(msg)
-    
-    else:
-        print "... passed."
-
 #####################################################
 
 SAMPLES = 150

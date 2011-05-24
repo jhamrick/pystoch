@@ -26,54 +26,40 @@ print "Tests: %s" % ", ".join(mytests.keys())
 print
 
 for testname in mytests:
-    print "-----------------------------------------------"
-    print "*** Running '%s' test... ***" % testname
-    print "-----------------------------------------------"
 
     test = mytests[testname]
+    testfailed = False
 
     # test the python code
     before = datetime.datetime.now()
     try:
         execfile(test)
+        pythonlocals = locals()
+        pythonresult = pythonlocals['result']
     except:
-        traceback.print_exc(limit=5)
-        print 'FAILED\n'
-        continue
-        
-    pythonlocals = locals()
+        pythonresult = traceback.format_exc(limit=5)
+        testfailed = True
     after = datetime.datetime.now()
     pythontime = to_seconds(after-before)
-    pythonresult = pythonlocals['result']
 
     # run the python code as pystoch code
     before = datetime.datetime.now()
     try:
         pystochlocals = pystoch.run(test)
+        pystochresult = pystochlocals['result']
     except:
-        traceback.print_exc(limit=5)
-        print 'FAILED\n'
-        continue
-        
+        pystochresult = traceback.format_exc(limit=5)
+        testfailed = True
     after = datetime.datetime.now()
     pystochtime = to_seconds(after-before)
-    pystochresult = pystochlocals['result']
 
-    def indent(src):
-        return "\n".join(["\t" + line for line in src.split("\n")])
-        
-    print "Python Result  : %s" % pythonresult
-    print "PyStoch Result : %s" % pystochresult
-    print
-    print "Python Time    : %s seconds" % pythontime
-    print "PyStoch Time   : %s seconds" % pystochtime
-    print
-        
-    if pythonresult != pystochresult:
-        print "FAILED"
+    testfailed = testfailed or (pythonresult != pystochresult)
+    print_results(testname, pythonresult, pythontime,
+                  pystochresult, pystochtime, testfailed)
+
+    if testfailed:
         failed.append(testname)
     else:
-        print "PASSED"
         passed.append(testname)
 
     print
