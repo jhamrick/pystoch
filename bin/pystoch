@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from pystoch import PyStochObj
-from pystoch import compile as c
+from pystoch import PyStochCompiler
 
 import argparse
 import os
@@ -18,7 +18,9 @@ def run(prog, args):
     if prog.endswith('.pystoch'):
         filename = prog
     else:
-        source = c.pystoch_compile(prog)
+        generator = PyStochCompiler()
+        generator.compile(prog)
+        source = generator.source
         temp = tempfile.NamedTemporaryFile(
             prefix='tmp_', suffix='.pystoch', dir='/tmp', delete=False)
         temp.write(source)

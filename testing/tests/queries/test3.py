@@ -1,11 +1,8 @@
 import pystoch
-from pystoch.queries import RejectionQuery, MetropolisHastings
-from pystoch.erps import flip
-from pystoch.graphing import discrete_hist
+from pystoch import MetropolisHastings, flip, hist
 
 import numpy as np
 import datetime
-import pdb
 
 # (define samples
 #    (mh-query 1000 100
@@ -85,5 +82,5 @@ secs = np.round(secs, decimals=2)
 print "\tTime:   %s seconds" % secs
 print
 
-discrete_hist(samples, "Joint Inferences for\nLung Cancer and TB",
-              path="../../../graphs/test3.pdf")
+hist(samples, "Joint Inferences for\nLung Cancer and TB",
+     path="../../../graphs/test3.pdf")

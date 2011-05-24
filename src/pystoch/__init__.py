@@ -17,8 +17,8 @@ from graphing import *
 __all__.extend(graphing.__all__)
 
 import transform
-from transform import compile
-__all__.append('compile')
+from transform import PyStochCompiler
+__all__.append('PyStochCompiler')
 
 import utilities
 from utilities import *

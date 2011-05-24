@@ -1,7 +1,5 @@
 import pystoch
-from pystoch.queries import RejectionQuery, MetropolisHastings
-from pystoch.erps import flip
-from pystoch.graphing import discrete_hist
+from pystoch import RejectionQuery, MetropolisHastings, flip, hist
 
 import numpy as np
 import datetime
@@ -89,7 +87,7 @@ secs = np.round(secs, decimals=2)
 print "\tResult: %s" % np.mean(samples2)
 print "\tTime:   %s seconds" % secs
 
-discrete_hist(np.array([samples1, samples2]), "Probability of A Given that D>=2",
-              labels=["RejectionQuery",
-                      "MetropolisHastings"],
-              path="../../../graphs/test1.pdf")
+hist(np.array([samples1, samples2]), "Probability of A Given that D>=2",
+     labels=["RejectionQuery",
+             "MetropolisHastings"],
+     path="../../../graphs/test1.pdf")

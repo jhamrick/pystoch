@@ -67,7 +67,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
     """
 
-    def __init__(self):
+    def __init__(self, sourcefile=None):
         """Initialize the PyStochCompiler.
 
         This initializes the SourceGenerator, and creates a new list
@@ -81,6 +81,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.inclass = False
         self.infunc = False
         self.line = Stack()
+        self.sourcefile = sourcefile
         
     def _gen_iden(self, node):
         """Generate a random unique PyStoch identifier.
@@ -160,15 +161,16 @@ class PyStochCompiler(codegen.SourceGenerator):
             super(PyStochCompiler, self).newline()
             self.write(statement)
 
-    def compile(self, src):
+    def compile(self, src=None):
         """Compile python source to pystoch source.
 
         Parameters
         ----------
-        src : string
-            If source is a valid path, it will load the source from the
-            path and compile that.  If it is not, then it will be treated
-            as the text of the source itself and be compiled.
+        src : string (default=None)
+            If source is a valid path, it will load the source from
+            the path and compile that.  If it is not, then it will be
+            treated as the text of the source itself and be compiled.
+            If src is None, then self.sourcefile will be used.
 
         Returns
         -------
@@ -176,6 +178,11 @@ class PyStochCompiler(codegen.SourceGenerator):
             The compiled source
 
         """
+
+        if src is None:
+            src = self.sourcefile
+        if src is None:
+            raise ValueError("one of src or self.sourcefile must be set")
 
         # read in the source from a file
         if os.path.exists(src):

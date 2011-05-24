@@ -1,39 +1,19 @@
 #!/usr/bin/python
 
-from pystoch.compile import PyStochCompiler
+from pystoch import PyStochCompiler
 
-def pystoch_compile(source):
-    """Compile python to pystoch.
-
-    Parameters
-    ----------
-    source : string
-        If source is a valid path, it will load the source from the
-        path and compile that.  If it is not, then it will be treated
-        as the text of the source itself and be compiled.
-
-    Returns
-    -------
-    out : string
-        The compiled source
-
-    """
+# TODO: this should do some real argument parsing
     
-    generator = PyStochCompiler()
-    generator.compile(source)
-    return generator.source
+infile = sys.argv[1]
+generator = PyStochCompiler()
+generator.compile(infile)
+transform = generator.source
 
-if __name__ == "__main__":
-    # TODO: this should do some real argument parsing
+if infile.endswith(".py"):
+    outfile = infile.rstrip(".py") + ".pystoch"
+else:
+    outfile = infile + ".pystoch"
     
-    infile = sys.argv[1]
-    transform = pystoch_compile(infile)
-
-    if infile.endswith(".py"):
-        outfile = infile.rstrip(".py") + ".pystoch"
-    else:
-        outfile = infile + ".pystoch"
-    
-    of = open(outfile, 'w')
-    of.write(transform)
-    of.close()
+of = open(outfile, 'w')
+of.write(transform)
+of.close()

@@ -1,12 +1,9 @@
 import pystoch
-from pystoch.queries import MetropolisHastings, RejectionQuery
-from pystoch.erps import flip, uniform_draw
-from pystoch.graphing import line_plot
+from pystoch import MetropolisHastings, flip, uniform_draw, lineplot
 
 import numpy as np
 import datetime
 import random
-import matplotlib.pyplot as plt
 
 # (define (samples data) 
 #    (mh-query
@@ -77,4 +74,4 @@ for i in xrange(1, 8, 2):
 
 print x
 print y
-line_plot(x, y, "Probability of Hypothesis Big", path="../../../graphs/test5.pdf")
+lineplot(x, y, "Probability of Hypothesis Big", path="../../../graphs/test5.pdf")

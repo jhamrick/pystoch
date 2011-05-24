@@ -1,11 +1,8 @@
 import pystoch
-from pystoch.queries import MetropolisHastings
-from pystoch.erps import flip, uniform
-from pystoch.graphing import cont_hist
+from pystoch import MetropolisHastings, flip, uniform, truehist
 
 import numpy as np
 import datetime
-import pdb
 
 # (define observed-data '(h h h h h))
 # (define num-flips (length observed-data))
@@ -70,9 +67,9 @@ secs = np.round(secs, decimals=2)
 print "\tTime:   %s seconds" % secs
 print
 
-cont_hist(np.array([prior_samples, samples]), "Beliefs about Coin Weight",
-          numbins=20,
-          labels=["prior to observing data",
-                  "conditioned on observed data"],
-          path="../../../graphs/test4.pdf")
+truehist(np.array([prior_samples, samples]), "Beliefs about Coin Weight",
+         numbins=20,
+         labels=["prior to observing data",
+                 "conditioned on observed data"],
+         path="../../../graphs/test4.pdf")
                    

@@ -1,7 +1,5 @@
 import pystoch
-from pystoch.queries import RejectionQuery, MetropolisHastings
-from pystoch.erps import gamma
-from pystoch.graphing import cont_hist
+from pystoch import RejectionQuery, MetropolisHastings, gamma, truehist
 
 import datetime
 import numpy as np
@@ -52,7 +50,7 @@ secs = np.round(secs, decimals=2)
 print "\tResult: %s" % np.mean(samples2)
 print "\tTime:   %s seconds" % secs
 
-cont_hist(np.array([samples1, samples2]), "Gamma (k=2, theta=2)",
-          numbins=20,
-          labels=["RejectionQuery", "MetropolisHastings"],
-          path="../../../graphs/gamma.pdf")
+truehist(np.array([samples1, samples2]), "Gamma (k=2, theta=2)",
+         numbins=20,
+         labels=["RejectionQuery", "MetropolisHastings"],
+         path="../../../graphs/gamma.pdf")
