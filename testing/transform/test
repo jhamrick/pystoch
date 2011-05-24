@@ -15,23 +15,22 @@ testfiles = [os.path.join("tests", test) for test in os.listdir("tests") \
              if test.endswith(".py")]
 
 # read all of the tests in and stick the code in a dictionary
-tests = {}
+mytests = {}
 for testfile in testfiles:
     back = len(".py")
     name = os.path.basename(testfile)[:-back]
-    tests[name] = testfile
+    mytests[name] = testfile
 
-print "Tests: %s" % ", ".join(tests.keys())
+tests.extend(mytests.keys())
+print "Tests: %s" % ", ".join(mytests.keys())
 print
 
-passed = []
-failed = []
-for testname in tests:
+for testname in mytests:
     print "-----------------------------------------------"
     print "*** Running '%s' test... ***" % testname
     print "-----------------------------------------------"
 
-    test = tests[testname]
+    test = mytests[testname]
 
     # test the python code
     before = datetime.datetime.now()
@@ -78,10 +77,3 @@ for testname in tests:
         passed.append(testname)
 
     print
-
-print "-----------------------------------------------"
-print
-print "Tests passed: %s/%s" % (len(passed), len(tests))
-print "Tests failed: %s/%s" % (len(failed), len(tests))
-print
-print "Failed tests: %s" % ", ".join(failed)

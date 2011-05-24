@@ -1,0 +1,22 @@
+#!/usr/bin/python
+
+import os
+
+tests = []
+passed = []
+failed = []
+
+for f in os.listdir('.'):
+    if os.path.isdir(f):
+        files =  os.listdir(f)
+        if 'test' in files:
+            os.chdir(f)
+            execfile('test')
+
+
+print "-----------------------------------------------"
+print
+print "Tests passed: %s/%s" % (len(passed), len(tests))
+print "Tests failed: %s/%s" % (len(failed), len(tests))
+print
+print "Failed tests: %s" % ", ".join(failed)
