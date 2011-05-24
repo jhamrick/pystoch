@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
 """
-    codegen
-    ~~~~~~~
+pystoch.transform.codegen
+-------------------------
 
-    Extension to ast that allow ast -> python code generation.
+Extension to ast that allow ast -> python code generation.
 
-    :copyright: Copyright 2008 by Armin Ronacher.
-    :license: BSD.
+:copyright: Copyright 2008 by Armin Ronacher.
+:license: BSD.
+    
 """
-from ast import *
-import pdb
 
+from .ast import *
 
 def to_source(node, indent_with=' ' * 4, add_line_information=False):
     """This function can convert a node tree back into python sourcecode.

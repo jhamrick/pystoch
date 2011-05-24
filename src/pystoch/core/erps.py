@@ -1,6 +1,11 @@
+"""
+pystoch.core.erps
+-----------------
+
+"""
+
 import numpy as np
 import scipy.stats.distributions as dists
-import pdb
 
 def erp(func):
     func.erp = True
@@ -22,6 +27,8 @@ def kernel(kernel_func, kernel_prob_func):
         func.kernel.prob = kernel_prob_func
         return func
     return wrap
+
+#########################################################################
 
 def _binomial_pmf(x, n, p):
     """Probability mass function at x of the given binomial
@@ -109,6 +116,8 @@ def binomial(n, p):
 
     return _binomial(n, p)
 
+#########################################################################
+
 def _exponential_pdf(x, scale):
     """Probabiliy density function at x for the exponential
     distribution with scale `scale`.
@@ -169,6 +178,8 @@ def exponential(scale):
     
     return _exponential(scale)
 
+#########################################################################
+
 def _flip_pmf(x, weight=0.5):
     """The probability mass function for a single coin flip.
 
@@ -213,6 +224,8 @@ def flip(weight=0.5):
     """
 
     return _flip(weight)
+
+#########################################################################
 
 def _gamma_pdf(x, k, theta):
     """The probability density at x for a gamma distribution with
@@ -289,6 +302,8 @@ def gamma(k, theta):
 
     return _gamma(k, theta)
 
+#########################################################################
+
 def _gaussian_pdf(x, mean, std):
     """The probability density at x for the gaussian distribution with
     mean `mean` and standard deviation `std`.
@@ -364,6 +379,8 @@ def gaussian(mean, std):
 
     return _gaussian(mean, std)
 
+#########################################################################
+
 def _poisson_pmf(x, lam):
     """The probability mass at x for the poisson distribution with parameter `lam`.
 
@@ -423,6 +440,8 @@ def poisson(lam):
     
     return _poisson(lam)
 
+#########################################################################
+
 def _uniform_pdf(x, low, high):
     """The probability density at x for the uniform distribution from
     `low` to `high`.
@@ -478,6 +497,8 @@ def uniform(low, high):
     
     return _uniform(low, high)
 
+#########################################################################
+
 def _sample_integer_pmf(x, low, high):
     if x < low or x >= high:
         return 0.0
@@ -499,7 +520,11 @@ def _sample_integer_kernel_prob(new_val, val, low, high):
 def sample_integer(low, high):
     return _sample_integer(low, high)
 
+#########################################################################
+
 def uniform_draw(values, PYSTOCHOBJ=None):
     idx = PYSTOCHOBJ.call(sample_integer, 0, len(values))
     return values[idx]
 uniform_draw.random = True
+
+#########################################################################

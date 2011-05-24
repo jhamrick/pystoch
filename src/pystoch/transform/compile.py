@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-"""pystoch.compile
+"""
+pystoch.transform.compile
+-------------------------
 
 This module contains the operations necessary to compile a normal
 python program (with stochastic function calls) into a pystoch
@@ -9,38 +11,17 @@ program.
 """
 
 import _ast
-import ast
-import codegen
 import datetime
 import hashlib
 import os
-import pdb
 import sys
-from stack import Stack
+
+from ..utilities.stack import Stack
+from . import ast
+from . import codegen
 
 if sys.version_info[:2] != (2, 6):
     raise NotImplementedError, "PyStoch currently only supports Python 2.6"
-
-def pystoch_compile(source):
-    """Compile python to pystoch.
-
-    Parameters
-    ----------
-    source : string
-        If source is a valid path, it will load the source from the
-        path and compile that.  If it is not, then it will be treated
-        as the text of the source itself and be compiled.
-
-    Returns
-    -------
-    out : string
-        The compiled source
-
-    """
-    
-    generator = PyStochCompiler()
-    generator.compile(source)
-    return generator.source
 
 class UnexpectedCallException(Exception):
     def __init__(self):
@@ -1330,18 +1311,3 @@ class PyStochCompiler(codegen.SourceGenerator):
         """
 
         super(PyStochCompiler, self).visit_ExceptHandler(node)
-
-if __name__ == "__main__":
-    # TODO: this should do some real argument parsing
-    
-    infile = sys.argv[1]
-    transform = pystoch_compile(infile)
-
-    if infile.endswith(".py"):
-        outfile = infile.rstrip(".py") + ".pystoch"
-    else:
-        outfile = infile + ".pystoch"
-    
-    of = open(outfile, 'w')
-    of.write(transform)
-    of.close()

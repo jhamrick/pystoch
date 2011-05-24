@@ -1,6 +1,13 @@
-import erps
+"""
+pystoch.core.queries
+--------------------
+
+"""
+
 import numpy as np
-from pystoch.exceptions import TraceInvalidatedException
+
+from . import erps
+from ..utilities.exceptions import TraceInvalidatedException
 
 def random(func):
     func.random = True

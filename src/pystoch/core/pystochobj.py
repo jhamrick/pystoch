@@ -1,6 +1,13 @@
-from stack import Stack
+"""
+pystoch.core.pystochobj
+-----------------------
+
+"""
+
+from ..utilities.stack import Stack
+from ..utilities.exceptions import TraceInvalidatedException
+
 import numpy as np
-from pystoch.exceptions import TraceInvalidatedException
 
 class PyStochObj(object):
     """pystoch.PyStochObj

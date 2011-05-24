@@ -1,3 +1,0 @@
-class TraceInvalidatedException(Exception):
-    pass
-
