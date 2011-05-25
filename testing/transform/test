@@ -37,7 +37,7 @@ for testname in mytests:
         pythonlocals = locals()
         pythonresult = pythonlocals['result']
     except:
-        pythonresult = traceback.format_exc(limit=5)
+        pythonresult = traceback.format_exc()
         testfailed = True
     after = datetime.datetime.now()
     pythontime = to_seconds(after-before)
@@ -48,7 +48,7 @@ for testname in mytests:
         pystochlocals = pystoch.run(test)
         pystochresult = pystochlocals['result']
     except:
-        pystochresult = traceback.format_exc(limit=5)
+        pystochresult = traceback.format_exc()
         testfailed = True
     after = datetime.datetime.now()
     pystochtime = to_seconds(after-before)

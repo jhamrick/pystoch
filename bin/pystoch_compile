@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from pystoch import PyStochCompiler
+import sys
 
 # TODO: this should do some real argument parsing
     

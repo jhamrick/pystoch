@@ -391,6 +391,9 @@ class PyStochCompiler(codegen.SourceGenerator):
             def visit_GeneratorExp(self, node):
                 return 1
 
+            def visit_Lambda(self, node):
+                return 1
+
         return CountListComps().visit(node)
 
     def should_rewrite(self, node, threshold=1, cthreshold=0):
@@ -535,6 +538,14 @@ class PyStochCompiler(codegen.SourceGenerator):
                 self.callback(assignment)
                 return ast.parse(iden).body[0].value
 
+            def visit_Lambda(self, node):
+                if self.done: return node
+
+                iden, assignment = self.to_assign(node)
+                self.done = True
+                self.callback(assignment)
+                return ast.parse(iden).body[0].value
+
         newnode = Replace(self.visit, self.should_rewrite, self.to_assign).visit(node)
         return newnode
 
@@ -561,10 +572,12 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        rw = self.should_rewrite(node, threshold=threshold, cthreshold=cthreshold)
+        rw = self.should_rewrite(node, threshold=threshold,
+                                 cthreshold=cthreshold)
         while rw:
             node = self._extract(node)
-            rw = self.should_rewrite(node, threshold=threshold, cthreshold=cthreshold)
+            rw = self.should_rewrite(node, threshold=threshold,
+                                     cthreshold=cthreshold)
 
         return node
 
@@ -695,10 +708,22 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # if the value is a list comprehension, the we need to handle
         # it specially
-        if isinstance(node.value, (_ast.ListComp, _ast.GeneratorExp)):
+        if isinstance(
+            node.value,
+            (_ast.ListComp, _ast.GeneratorExp, _ast.Lambda)):
             node.value = self.extract(node.value, cthreshold=1)
             iden = self.visit(node.value)
-            val = _ast.Name(id=iden, ctx=_ast.Load())                
+
+            if isinstance(node.value, _ast.GeneratorExp):
+                val = _ast.Call(
+                    func=_ast.Name(id=iden, ctx=_ast.Load()),
+                    args=[],
+                    keywords=[],
+                    starargs=None,
+                    kwargs=None)
+            else:
+                val = _ast.Name(id=iden, ctx=_ast.Load())
+                
             node = ast.Assign(
                 value=val,
                 targets=node.targets)
@@ -724,7 +749,9 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # if the value is a list comprehension, the we need to handle
         # it specially
-        if isinstance(node.value, (_ast.ListComp, _ast.GeneratorExp)):
+        if isinstance(
+            node.value,
+            (_ast.ListComp, _ast.GeneratorExp, _ast.Lambda)):
             node.value = self.extract(node.value, cthreshold=1)
             iden = self.visit_ListComp(node.value)
             val = _ast.Name(id=iden, ctx=_ast.Load())                
@@ -1050,7 +1077,15 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        raise NotImplementedError, "Lambda nodes are not supported at this time."
+        iden = self._gen_iden(node)
+        funcnode = _ast.FunctionDef(
+            name=iden,
+            args=node.args,
+            body=[_ast.Return(value=node.body)],
+            decorator_list=[])
+
+        self.visit(funcnode)
+        return iden
 
     def visit_IfExp(self, node):
         """IfExps are not supported at this time.
@@ -1156,18 +1191,17 @@ class PyStochCompiler(codegen.SourceGenerator):
         raise NotImplementedError, "Dictionary comprehensions are not supported at this time"
 
     def visit_GeneratorExp(self, node):
-        """Generator expressions are not supported at this time.
-        Please use a generator function instead.
+        """Rewrite the GeneratorExp visitor function to turn the
+        generator expression into a iterator function.  This is
+        necessary to be able to correctly label any random functions
+        that get called from within the generator expression.
+        Basically, this function creates a function, and transforms
+        the generator into a for loop that yields values from the.
+        The function name is then returned, so that the parent node
+        can handle the assignment properly.
 
         """
 
-        #foo = (x-mean) ** 2 for x in data
-        
-        #def gen(data):
-        #    for x in data:
-        #        yield (x - mean) ** 2
-        #foo = gen()
-        
         # make an identifier for the list
         self.newline(node)
         iden = self._gen_iden(node)
@@ -1176,8 +1210,9 @@ class PyStochCompiler(codegen.SourceGenerator):
         for gen in node.generators:
             argval = gen.iter
             argid = self._gen_iden(gen.iter)
-            self.visit(_ast.Assign(targets=[_ast.Name(id=argid, ctx=_ast.Store())],
-                                   value=argval))
+            self.visit(_ast.Assign(
+                targets=[_ast.Name(id=argid, ctx=_ast.Store())],
+                value=argval))
             argids.append(argid)
 
         elt = node.elt
@@ -1261,14 +1296,14 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         if self.inloop:
             self.insert([
-                "PYSTOCHOBJ.func_stack.push('%s')" % funciden,
-                "PYSTOCHOBJ.loop_stack.push('%s')" % loopiden,
-                "PYSTOCHOBJ.line_stack.push('%s')" % lineiden
+                "PYSTOCHOBJ.func_stack.push(%s)" % funciden,
+                "PYSTOCHOBJ.loop_stack.push(%s)" % loopiden,
+                "PYSTOCHOBJ.line_stack.push(%s)" % lineiden
                 ])
         else:
             self.insert([
-                "PYSTOCHOBJ.func_stack.push('%s')" % funciden,
-                "PYSTOCHOBJ.line_stack.push('%s')" % lineiden
+                "PYSTOCHOBJ.func_stack.push(%s)" % funciden,
+                "PYSTOCHOBJ.line_stack.push(%s)" % lineiden
                 ])
 
     def visit_Compare(self, node):
