@@ -364,6 +364,9 @@ class PyStochCompiler(codegen.SourceGenerator):
             def visit_ListComp(self, node):
                 return 0
 
+            def visit_GeneratorExp(self, node):
+                return 0
+
         return CountCalls().visit(node)
 
     def _count_listcomps(self, node):
@@ -385,9 +388,12 @@ class PyStochCompiler(codegen.SourceGenerator):
             def visit_ListComp(self, node):
                 return 1
 
+            def visit_GeneratorExp(self, node):
+                return 1
+
         return CountListComps().visit(node)
 
-    def should_rewrite(self, node, threshold=1, lcthreshold=0):
+    def should_rewrite(self, node, threshold=1, cthreshold=0):
         """Checks whether or not a node (_ast.AST) contains more than
         the minimum number of Call nodes and ListComps (though
         ListComps are only counted once, if they have more ListComps
@@ -411,7 +417,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         ctotal = self._count_calls(node)
         lctotal = self._count_listcomps(node)
-        return (ctotal > threshold) or (lctotal > lcthreshold)
+        return (ctotal > threshold) or (lctotal > cthreshold)
 
     def contains_return(self, node):
         """Checks whether or not a node (_ast.AST) contains any Return nodes.
@@ -521,10 +527,18 @@ class PyStochCompiler(codegen.SourceGenerator):
                 self.callback(assignment)
                 return ast.parse(iden).body[0].value
 
+            def visit_GeneratorExp(self, node):
+                if self.done: return node
+
+                iden, assignment = self.to_assign(node)
+                self.done = True
+                self.callback(assignment)
+                return ast.parse(iden).body[0].value
+
         newnode = Replace(self.visit, self.should_rewrite, self.to_assign).visit(node)
         return newnode
 
-    def extract(self, node, threshold=1, lcthreshold=0):
+    def extract(self, node, threshold=1, cthreshold=0):
         """Extract all Call/ListComp nodes above a certain threshold
         from a node.  This repeatedly calls self._extract(node) until
         self.should_rewrite(node, threshold=threshold) is False.
@@ -536,7 +550,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         threshold : int (default=1)
             The minimum number of Call/ListComp nodes that are allowed
             before extraction will take place
-        lcthreshold : int (default=0)
+        cthreshold : int (default=0)
             The minimum number of ListComp nodes that are allowed
             before extraction will take place.
 
@@ -547,10 +561,10 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        rw = self.should_rewrite(node, threshold=threshold, lcthreshold=lcthreshold)
+        rw = self.should_rewrite(node, threshold=threshold, cthreshold=cthreshold)
         while rw:
             node = self._extract(node)
-            rw = self.should_rewrite(node, threshold=threshold, lcthreshold=lcthreshold)
+            rw = self.should_rewrite(node, threshold=threshold, cthreshold=cthreshold)
 
         return node
 
@@ -681,12 +695,13 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         # if the value is a list comprehension, the we need to handle
         # it specially
-        if isinstance(node.value, _ast.ListComp):
-            node.value = self.extract(node.value, lcthreshold=1)
-            iden = self.visit_ListComp(node.value)
+        if isinstance(node.value, (_ast.ListComp, _ast.GeneratorExp)):
+            node.value = self.extract(node.value, cthreshold=1)
+            iden = self.visit(node.value)
+            val = _ast.Name(id=iden, ctx=_ast.Load())                
             node = ast.Assign(
-                value = ast.parse(iden).body[0].value,
-                targets = node.targets)
+                value=val,
+                targets=node.targets)
 
         elif isinstance(node.value, _ast.Dict) or \
                  isinstance(node.value, _ast.List) or \
@@ -695,7 +710,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         else:
             # do Call/ListComp extraction on the node's value
-            node.value = self.extract(node.value, lcthreshold=0)
+            node.value = self.extract(node.value, cthreshold=0)
         
         return super(PyStochCompiler, self).visit_Assign(node)
 
@@ -706,20 +721,24 @@ class PyStochCompiler(codegen.SourceGenerator):
         """
         
         # do Call/ListComp extraction on the node's value
-        node.value = self.extract(node.value, lcthreshold=1)
 
         # if the value is a list comprehension, the we need to handle
         # it specially
-        if isinstance(node.value, _ast.ListComp):
+        if isinstance(node.value, (_ast.ListComp, _ast.GeneratorExp)):
+            node.value = self.extract(node.value, cthreshold=1)
             iden = self.visit_ListComp(node.value)
+            val = _ast.Name(id=iden, ctx=_ast.Load())                
             node = ast.Assign(
-                value = ast.parse(iden).body[0].value,
+                value = val,
                 targets = node.targets)
 
         elif isinstance(node.value, _ast.Dict) or \
                  isinstance(node.value, _ast.List) or \
                  isinstance(node.value, _ast.Tuple):
             node.value = self.extract(node.value, threshold=0)
+
+        else:
+            node.value = self.extract(node.value, cthreshold=0)
 
         super(PyStochCompiler, self).visit_AugAssign(node)
         
@@ -1084,7 +1103,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
             """
             
-            node = nodes[-1]
+            node = nodes[0]
             tempnode = ast.For()
             tempnode.target = node.target
             tempnode.iter = node.iter
@@ -1093,7 +1112,7 @@ class PyStochCompiler(codegen.SourceGenerator):
                 append_node = ast.parse("%s.append(%s)" % (iden, codegen.to_source(elt))).body[0]
                 body = [append_node]
             else:
-                body = [parse_generator(nodes[:-1])]
+                body = [parse_generator(nodes[1:])]
                 
             if len(node.ifs) == 1:
                 ifnode = _ast.If(
@@ -1164,16 +1183,16 @@ class PyStochCompiler(codegen.SourceGenerator):
         elt = node.elt
         
         def parse_generator(nodes, ids):
-            node = nodes.pop()
+            node = nodes[0]
             tempnode = _ast.For()
             tempnode.target = node.target
-            tempnode.iter = _ast.Name(id=ids.pop(), ctx=_ast.Load())
+            tempnode.iter = _ast.Name(id=ids[0], ctx=_ast.Load())
 
-            if len(nodes) == 0:
+            if len(nodes) == 1:
                 yield_node = _ast.Expr(value=_ast.Yield(value=elt))
                 body = [yield_node]
             else:
-                body = [parse_generator(nodes, ids)]
+                body = [parse_generator(nodes[1:], ids[1:])]
 
             if len(node.ifs) == 1:
                 ifnode = _ast.If(
