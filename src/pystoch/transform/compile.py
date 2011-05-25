@@ -1142,7 +1142,69 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        raise NotImplementedError, self.visit_GeneratorExp.__doc__
+        # #foo = (x-mean) ** 2 for x in data
+
+        # #def gen(data):
+        # #    for x in data:
+        # #        yield (x - mean) ** 2
+        # #foo = gen()
+        
+        # # make an identifier for the list
+        # self.newline(node)
+        # iden = self._gen_iden(node)
+        # node = _ast.FunctionDef(
+        #     name=iden,
+        #     args=([
+
+
+
+        
+        # elt = node.elt
+
+        # def parse_generator(nodes):
+        #     """Transform the generator into a for loop.
+
+        #     """
+            
+        #     node = nodes[-1]
+        #     tempnode = ast.For()
+        #     tempnode.target = node.target
+        #     tempnode.iter = node.iter
+                        
+        #     if len(nodes) == 1:
+        #         append_node = ast.parse("%s.append(%s)" % (iden, codegen.to_source(elt))).body[0]
+        #         body = [append_node]
+        #     else:
+        #         body = [parse_generator(nodes[:-1])]
+                
+        #     if len(node.ifs) == 1:
+        #         ifnode = _ast.If(
+        #             test=node.ifs[0],
+        #             body=body,
+        #             orelse=[])
+        #         tempnode.body = [ifnode]
+
+        #     elif len(node.ifs) > 1:
+        #         ifnode = _ast.If(
+        #             test=_ast.BoolOp(
+        #                 op=_ast.And(),
+        #                 values=node.ifs),
+        #             body=body,
+        #             orelse=[])
+        #         tempnode.body = [ifnode]
+
+        #     else:
+        #         tempnode.body = body
+                
+        #     tempnode.orelse = None
+        #     return tempnode
+
+        # # visit the for loop
+        # self.visit(parse_generator(node.generators))
+
+        # return iden
+
+        raise NotImplementedError
 
     def visit_Yield(self, node):
         """Rewrite the Yield visitor function to extract calls/list
