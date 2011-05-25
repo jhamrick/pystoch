@@ -24,6 +24,5 @@ import utilities
 from utilities import *
 __all__.extend(utilities.__all__)
 
-import main
 from main import run
 __all__.extend('run')
