@@ -1142,69 +1142,69 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        # #foo = (x-mean) ** 2 for x in data
-
-        # #def gen(data):
-        # #    for x in data:
-        # #        yield (x - mean) ** 2
-        # #foo = gen()
+        #foo = (x-mean) ** 2 for x in data
         
-        # # make an identifier for the list
-        # self.newline(node)
-        # iden = self._gen_iden(node)
-        # node = _ast.FunctionDef(
-        #     name=iden,
-        #     args=([
-
-
-
+        #def gen(data):
+        #    for x in data:
+        #        yield (x - mean) ** 2
+        #foo = gen()
         
-        # elt = node.elt
+        # make an identifier for the list
+        self.newline(node)
+        iden = self._gen_iden(node)
+        
+        argids = []
+        for gen in node.generators:
+            argval = gen.iter
+            argid = self._gen_iden(gen.iter)
+            self.visit(_ast.Assign(targets=[_ast.Name(id=argid, ctx=_ast.Store())],
+                                   value=argval))
+            argids.append(argid)
 
-        # def parse_generator(nodes):
-        #     """Transform the generator into a for loop.
+        elt = node.elt
+        
+        def parse_generator(nodes, ids):
+            node = nodes.pop()
+            tempnode = _ast.For()
+            tempnode.target = node.target
+            tempnode.iter = _ast.Name(id=ids.pop(), ctx=_ast.Load())
 
-        #     """
-            
-        #     node = nodes[-1]
-        #     tempnode = ast.For()
-        #     tempnode.target = node.target
-        #     tempnode.iter = node.iter
-                        
-        #     if len(nodes) == 1:
-        #         append_node = ast.parse("%s.append(%s)" % (iden, codegen.to_source(elt))).body[0]
-        #         body = [append_node]
-        #     else:
-        #         body = [parse_generator(nodes[:-1])]
-                
-        #     if len(node.ifs) == 1:
-        #         ifnode = _ast.If(
-        #             test=node.ifs[0],
-        #             body=body,
-        #             orelse=[])
-        #         tempnode.body = [ifnode]
+            if len(nodes) == 0:
+                yield_node = _ast.Expr(value=_ast.Yield(value=elt))
+                body = [yield_node]
+            else:
+                body = [parse_generator(nodes, ids)]
 
-        #     elif len(node.ifs) > 1:
-        #         ifnode = _ast.If(
-        #             test=_ast.BoolOp(
-        #                 op=_ast.And(),
-        #                 values=node.ifs),
-        #             body=body,
-        #             orelse=[])
-        #         tempnode.body = [ifnode]
+            if len(node.ifs) == 1:
+                ifnode = _ast.If(
+                    test=node.ifs[0],
+                    body=body,
+                    orelse=[])
+                tempnode.body = [ifnode]
 
-        #     else:
-        #         tempnode.body = body
-                
-        #     tempnode.orelse = None
-        #     return tempnode
+            elif len(node.ifs) > 1:
+                ifnode = _ast.If(
+                    test=_ast.BoolOp(
+                        op=_ast.And(),
+                        values=node.ifs),
+                    body=body,
+                    orelse=[])
+                tempnode.body = [ifnode]
 
-        # # visit the for loop
-        # self.visit(parse_generator(node.generators))
+            else:
+                tempnode.body = body
 
-        # return iden
-
-        raise NotImplementedError
+            tempnode.orelse = None
+            return tempnode
+         
+        node = _ast.FunctionDef(
+            name=iden,
+            args=_ast.arguments(args=[], vararg=None, kwarg=None, defaults=[]),
+            body=[parse_generator(node.generators, argids)],
+            decorator_list=[])
+        
+        self.visit(node)
+        return iden
 
     def visit_Yield(self, node):
         """Rewrite the Yield visitor function to extract calls/list
