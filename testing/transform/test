@@ -12,7 +12,7 @@ def to_seconds(td):
 
 # get a list of all of the tests
 testfiles = [os.path.join("tests", test) for test in os.listdir("tests") \
-             if test.endswith(".py")]
+             if test.endswith(".py") and not test.startswith(".#")]
 
 # read all of the tests in and stick the code in a dictionary
 mytests = {}
@@ -25,7 +25,9 @@ tests.extend(mytests.keys())
 print "Tests: %s" % ", ".join(mytests.keys())
 print
 
-for testname in mytests:
+testkeys = mytests.keys()
+testkeys.sort()
+for testname in testkeys:
 
     test = mytests[testname]
     testfailed = False

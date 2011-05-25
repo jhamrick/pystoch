@@ -737,7 +737,13 @@ class PyStochCompiler(codegen.SourceGenerator):
             # do Call/ListComp extraction on the node's value
             node.value = self.extract(node.value, cthreshold=0)
         
-        return super(PyStochCompiler, self).visit_Assign(node)
+        self.newline(node)
+        for idx, target in enumerate(node.targets):
+            if idx:
+                self.write(' = ')
+            self.visit(target)
+        self.write(' = ')
+        self.visit(node.value)
 
     def visit_AugAssign(self, node):
         """Rewrite the AugAssign visitor function to deal with list
@@ -860,8 +866,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         """
 
         node.test = self.extract(node.test)
-        for i in xrange(len(node.orelse)):
-            node.orelse[i] = self.extract(node.orelse[i], threshold=0)
+        #for i in xrange(len(node.orelse)):
+        #    node.orelse[i] = self.extract(node.orelse[i], threshold=0)
 
         self.newline(node)
         self.write('if ')
@@ -966,15 +972,15 @@ class PyStochCompiler(codegen.SourceGenerator):
             self.visit(node.msg)
 
     def visit_Import(self, node):
-        """The superclass' visit_Import method is called.
-
-        See Also
-        --------
-        codegen.SourceCompiler#visit_Import
+        """Visit an import node (not calling superclass because it is
+        wrong)
 
         """
 
-        super(PyStochCompiler, self).visit_Import(node)
+        for item in node.names:
+            self.newline(node)
+            self.write('import ')
+            self.visit(item)
 
     def visit_ImportFrom(self, node):
         """The superclass' visit_ImportFrom method is called.
