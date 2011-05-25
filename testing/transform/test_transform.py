@@ -1,59 +1,50 @@
-#!/usr/bin/python
-
-import pystoch
-import os
-import re
 import datetime
+import os
+import pystoch
+import re
 import traceback
+import unittest
 
-def to_seconds(td):
-    return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) \
-           / 10.0**6
+class TestTransform(unittest.TestCase):
 
-# get a list of all of the tests
-testfiles = [os.path.join("tests", test) for test in os.listdir("tests") \
-             if test.endswith(".py") and not test.startswith(".#")]
+    def setUp(self):
+        # get a list of all of the tests
+        testfiles = [os.path.join("tests", test) for test \
+                     in os.listdir("tests") \
+                     if test.endswith(".py") and \
+                     not test.startswith(".#")]
+        testfiles.sort()
 
-# read all of the tests in and stick the code in a dictionary
-mytests = {}
-for testfile in testfiles:
-    back = len(".py")
-    name = os.path.basename(testfile)[:-back]
-    mytests[name] = testfile
+        def gentest(test):
+            def mytest(self):
+                # test the python code
+                try:
+                    execfile(test)
+                    pythonlocals = locals()
+                    pythonresult = pythonlocals['result']
+                except:
+                    pythonresult = traceback.format_exc()
+                    testfailed = True
 
-tests.extend(mytests.keys())
-print "Tests: %s" % ", ".join(mytests.keys())
-print
+                # run the python code as pystoch code
+                try:
+                    pystochlocals = pystoch.run(test)
+                    pystochresult = pystochlocals['result']
+                except:
+                    pystochresult = traceback.format_exc()
+                    testfailed = True
 
-testkeys = mytests.keys()
-testkeys.sort()
-for testname in testkeys:
+        for testfile in testfiles:
+            back = len(".py")
+            name = os.path.basename(testfile)[:-back]
+            setattr(self, "test_%s" % name, gentest(name))
+        
 
-    test = mytests[testname]
-    testfailed = False
+        # read all of the tests in and stick the code in a dictionary
+        tests = {}
+        for testfile in testfiles:
+            tests[name] = testfile
 
-    # test the python code
-    before = datetime.datetime.now()
-    try:
-        execfile(test)
-        pythonlocals = locals()
-        pythonresult = pythonlocals['result']
-    except:
-        pythonresult = traceback.format_exc()
-        testfailed = True
-    after = datetime.datetime.now()
-    pythontime = to_seconds(after-before)
-
-    # run the python code as pystoch code
-    before = datetime.datetime.now()
-    try:
-        pystochlocals = pystoch.run(test)
-        pystochresult = pystochlocals['result']
-    except:
-        pystochresult = traceback.format_exc()
-        testfailed = True
-    after = datetime.datetime.now()
-    pystochtime = to_seconds(after-before)
 
     testfailed = testfailed or (pythonresult != pystochresult)
     print_results(testname, pythonresult, pythontime,
