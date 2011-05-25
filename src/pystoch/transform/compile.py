@@ -1073,7 +1073,8 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_UnaryOp(node)
 
     def visit_Lambda(self, node):
-        """Lambdas are not supported at this time.
+        """Rewrite the Lambda visitor function to transform the lambda
+        into a real iterator function.
 
         """
 
