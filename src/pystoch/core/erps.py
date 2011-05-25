@@ -191,9 +191,6 @@ def _flip_pmf(x, weight=0.5):
         return 1 - weight
 
 def _flip(weight=0.5):
-    if weight < 0.0 or weight > 1.0:
-        raise ValueError, "weight must be between 0 and 1"
-    
     return np.random.uniform(0, 1) <= weight
 
 def _flip_kernel(val, weight=0.5):
@@ -218,10 +215,15 @@ def flip(weight=0.5):
 
     Parameters
     ----------
-    weight : float, optional
+    weight : float (default=0.5)
         The weight of the coin, in the interval [0, 1].
 
     """
+
+    if not isinstance(weight, (int, float)) or isinstance(weight, bool):
+        raise ValueError, "weight must be a number"
+    if weight < 0.0 or weight > 1.0:
+        raise ValueError, "weight must be between 0 and 1"
 
     return _flip(weight)
 

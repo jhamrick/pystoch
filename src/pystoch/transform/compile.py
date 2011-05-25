@@ -16,7 +16,7 @@ import hashlib
 import os
 import sys
 
-from pystoch.utilities.stack import Stack
+from pystoch.utilities.stack import IntegerStack
 import ast
 import codegen
 
@@ -67,7 +67,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
     """
 
-    def __init__(self, sourcefile=None):
+    def __init__(self):
         """Initialize the PyStochCompiler.
 
         This initializes the SourceGenerator, and creates a new list
@@ -80,8 +80,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.inloop = False
         self.inclass = False
         self.infunc = False
-        self.line = Stack()
-        self.sourcefile = sourcefile
+        self.line = IntegerStack()
         
     def _gen_iden(self, node):
         """Generate a random unique PyStoch identifier.
@@ -156,12 +155,16 @@ class PyStochCompiler(codegen.SourceGenerator):
         if not isinstance(statements, (list, tuple)):
             statements = [statements]
 
+        for statement in statements:
+            if not isinstance(statement, str):
+                raise ValueError, "statement is not a string"
+
         # write each statement, separated by a newline
         for statement in statements:
             super(PyStochCompiler, self).newline()
             self.write(statement)
 
-    def compile(self, src=None):
+    def compile(self, src):
         """Compile python source to pystoch source.
 
         Parameters
@@ -170,7 +173,6 @@ class PyStochCompiler(codegen.SourceGenerator):
             If source is a valid path, it will load the source from
             the path and compile that.  If it is not, then it will be
             treated as the text of the source itself and be compiled.
-            If src is None, then self.sourcefile will be used.
 
         Returns
         -------
@@ -179,10 +181,8 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        if src is None:
-            src = self.sourcefile
-        if src is None:
-            raise ValueError("one of src or self.sourcefile must be set")
+        if not isinstance(src, string):
+            raise ValueError("src must be a string")
 
         # read in the source from a file
         if os.path.exists(src):
@@ -323,6 +323,9 @@ class PyStochCompiler(codegen.SourceGenerator):
             _ast.Assign is the node that was created
 
         """
+
+        if not isinstance(value, _ast.AST):
+            raise ValueError, "value is not an instance of _ast.AST"
         
         iden = self._gen_iden(value)
         node = _ast.Assign(

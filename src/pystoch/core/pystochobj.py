@@ -4,7 +4,7 @@ pystoch.core.pystochobj
 
 """
 
-from ..utilities.stack import Stack
+from ..utilities.stack import StringStack, IntegerStack
 from ..utilities.exceptions import TraceInvalidatedException
 
 import numpy as np
@@ -73,9 +73,9 @@ class PyStochObj(object):
 
         """
         
-        self.func_stack = Stack()
-        self.line_stack = Stack()
-        self.loop_stack = Stack()
+        self.func_stack = StringStack()
+        self.line_stack = IntegerStack()
+        self.loop_stack = IntegerStack()
 
         self.db = {}
         self.curr_trace = 0

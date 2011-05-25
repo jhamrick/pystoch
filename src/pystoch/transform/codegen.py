@@ -129,8 +129,8 @@ class SourceGenerator(NodeVisitor):
             self.visit(item)
 
     def visit_Import(self, node):
+        self.newline(node)
         for item in node.names:
-            self.newline(node)
             self.write('import ')
             self.visit(item)
 

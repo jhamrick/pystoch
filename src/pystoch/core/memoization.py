@@ -5,4 +5,4 @@ pystoch.core.memoization
 """
 
 def dp_mem(var):
-    pass
+    raise NotImplementedError, "dp_mem is not yet implemented"
