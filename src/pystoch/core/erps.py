@@ -30,6 +30,77 @@ def kernel(kernel_func, kernel_prob_func):
 
 #########################################################################
 
+def _beta_pdf(x, a, b):
+    """Probability density function at x of the given beta
+    distribution with parameters a and b.
+
+    See Also
+    --------
+    scipy.stats.distributions.beta.pmf
+
+    """
+
+    return dists.beta.pdf(x, a, b)
+
+def _beta(a, b):
+    if a < 0:
+        raise ValueError, "a must be non-negative"
+    if b < 0:
+        raise ValueError, "b must be non-negative"
+
+    return np.random.beta(a, b)
+
+def _beta_kernel(val, a, b):
+    return _beta(a, b)
+
+def _beta_kernel_prob(new_val, val, a, b):
+    return _beta_pdf(new_val, a, b)
+
+@erp
+@prob(_beta_pmf)
+@kernel(_beta_kernel, _beta_kernel_prob)
+def beta(a, b):
+    """Draw a sample from the Beta distribution over ``[0, 1]``.  The
+    Beta distribution is a special case of the Dirichlet distribution,
+    and is related to the Gamma distribution.  It has the probability
+    distribution function
+    
+    .. math:: f(x; a,b) = \frac{1}{B(\alpha, \beta)} x^{\alpha - 1}
+                                                     (1 - x)^{\beta - 1},
+    
+    where the normalisation, B, is the beta function,
+    
+    .. math:: B(\alpha, \beta) = \int_0^1 t^{\alpha - 1}
+                                 (1 - t)^{\beta - 1} dt.
+    
+    It is often seen in Bayesian inference and order statistics.
+    
+    Parameters
+    ----------
+    a : float
+        Alpha, non-negative.
+    b : float
+        Beta, non-negative.
+    size : tuple of ints, optional
+        The number of samples to draw.  The ouput is packed according to
+        the size given.
+    
+    Returns
+    -------
+    out : ndarray
+        Array of the given shape, containing values drawn from a
+        Beta distribution.
+
+    See Also
+    --------
+    numpy.random.beta
+
+    """
+
+    return _beta(a, b)
+
+#########################################################################
+
 def _binomial_pmf(x, n, p):
     """Probability mass function at x of the given binomial
     distribution with parameters n and p.
