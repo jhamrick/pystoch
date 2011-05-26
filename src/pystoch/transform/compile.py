@@ -85,7 +85,7 @@ class PyStochCompiler(codegen.SourceGenerator):
     def _gen_iden(self, node):
         """Generate a random unique PyStoch identifier.
 
-        All PyStoch identifiers are prefixed by 'PYSTOCHID_', followed
+        All PyStoch identifiers are prefixed by 'PYSTOCH_', followed
         by an eight-character hexadecimal string.  The hexadecimal is
         the first eight characters of the md5 digest of the current
         date and time concatenated with the hash of `node`.
@@ -112,7 +112,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         if iden in self.idens:
             iden = self._gen_iden(node)
         self.idens.append(iden)
-        return "PYSTOCHID_%s" % iden
+        return "PYSTOCH_%s" % iden
 
     @property
     def source(self):
@@ -1012,14 +1012,14 @@ class PyStochCompiler(codegen.SourceGenerator):
         handled specially, because we want to make sure that the first
         Call node remains on a line by itself, e.g.:
 
-        PYSTOCHID_AAAAAAAA = bar()
-        foo(PYSTOCHID_AAAAAAAA)
+        PYSTOCH_AAAAAAAA = bar()
+        foo(PYSTOCH_AAAAAAAA)
 
         And not:
 
-        PYSTOCHID_AAAAAAAA = bar()
-        PYSTOCHID_BBBBBBBB = foo(PYSTOCHID_AAAAAAAA)
-        PYSTOCHID_BBBBBBBB
+        PYSTOCH_AAAAAAAA = bar()
+        PYSTOCH_BBBBBBBB = foo(PYSTOCH_AAAAAAAA)
+        PYSTOCH_BBBBBBBB
 
         If it is not a call function, then it extracts the node's
         value as per usual and then calls the super visit_Expr on the
@@ -1158,7 +1158,8 @@ class PyStochCompiler(codegen.SourceGenerator):
             tempnode.iter = node.iter
                         
             if len(nodes) == 1:
-                append_node = ast.parse("%s.append(%s)" % (iden, codegen.to_source(elt))).body[0]
+                append_node = ast.parse("%s.append(foo)" % iden).body[0]
+                append_node.value.args[0] = elt
                 body = [append_node]
             else:
                 body = [parse_generator(nodes[1:])]

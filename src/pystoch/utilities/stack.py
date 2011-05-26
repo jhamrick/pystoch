@@ -50,7 +50,22 @@ class Stack(object):
         return hash(''.join(stack))
 
     def __str__(self):
-        return str(self.stack)
+        string = []
+        previtem = None
+        numprev = 0
+        for i in xrange(len(self.stack)):
+            item = self.stack[len(self.stack)-i-1]
+            if item != previtem:
+                if numprev > 1:
+                    string[-1] += "*%s" % numprev
+                string.insert(0, str(item))
+                numprev = 1
+            else:
+                numprev += 1
+
+            previtem = item
+
+        return ','.join(string)
 
     def __repr__(self):
         return "<Stack %s>" % self.__str__()

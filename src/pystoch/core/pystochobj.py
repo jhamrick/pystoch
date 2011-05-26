@@ -190,9 +190,9 @@ class PyStochObj(object):
         """
         
         # calculate the name of the current random choice
-        name = "%s-%s-%s" % (hash(self.func_stack),
-                             hash(self.line_stack),
-                             hash(self.loop_stack))
+        name = "%s-%s-%s" % (str(self.func_stack),
+                             str(self.line_stack),
+                             str(self.loop_stack))
 
         # look up the name in the database
         if name in self.db:
@@ -222,7 +222,6 @@ class PyStochObj(object):
             val = erp_curr(*args_curr[0], **args_curr[1])
             erp_loglh = np.log(erp_curr.prob(val, *args_curr[0], **args_curr[1]))
             
-
         # update the database to reflect any changes (including that
         # this random choice was used during this trace)
         self.db[name] = (erp_curr, val, erp_loglh, args_curr, self.curr_trace)

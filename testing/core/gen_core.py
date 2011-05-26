@@ -21,7 +21,7 @@ import unittest
 import sys
 import numpy as np
 
-RUNS = 5
+RUNS = 1
 
 class TestCore(unittest.TestCase):
 
@@ -32,7 +32,7 @@ class TestCore(unittest.TestCase):
         exresults = []
         for i in xrange(RUNS):
             localsdict = {
-                'SAMPLES' : 150,
+                'SAMPLES' : 100,
                 'LAG' : 20,
                 'TOLERANCE' : 0.07
             }
@@ -54,12 +54,8 @@ class TestCore(unittest.TestCase):
         mean_abs_error = np.round(np.mean(errors), decimals=5)
         std_error = np.std(errors)
 
-        #print results
-        #print estimates
-        #print mean_abs_error
-
         assert mean_abs_error <= tolerance, \\
-               'true_expectation: %s, test mean: %s' % \\
+               'true expectation: %s, test mean: %s' % \\
                (exresult, np.mean(estimates))
 
 """)

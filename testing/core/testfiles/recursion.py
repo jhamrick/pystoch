@@ -1,5 +1,5 @@
 import pystoch
-from pystoch import flip, MetropolisHastings
+from pystoch import flip, MetropolisHastings, hist
 
 class Query(MetropolisHastings):
 
