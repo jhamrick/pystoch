@@ -46,7 +46,9 @@ class MetropolisHastings(object):
             test = PYSTOCHOBJ.call(self.condition)
 
     def do_trace_update(self, func, db, PYSTOCHOBJ):
+        PYSTOCHOBJ.running_query = True
         trace_loglh, db, trace = PYSTOCHOBJ.trace_update(func, db)
+        PYSTOCHOBJ.running_query = False
         if not PYSTOCHOBJ.call(self.condition):
             trace_loglh = -np.inf
         return trace_loglh, db, trace
@@ -65,8 +67,6 @@ class MetropolisHastings(object):
             The PYSTOCHOBJ containing the trace state
 
         """
-
-        PYSTOCHOBJ.running_query = True
 
         num_traces = 0
         num_accepted = 0
@@ -155,8 +155,6 @@ class MetropolisHastings(object):
             # add the current sample to our list of samples
             num_samples -= 1
             samples.append(sample)
-
-        PYSTOCHOBJ.running_query = False
 
         return samples
 

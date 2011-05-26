@@ -54,6 +54,10 @@ class TestCore(unittest.TestCase):
         mean_abs_error = np.round(np.mean(errors), decimals=5)
         std_error = np.std(errors)
 
+        #print results
+        #print estimates
+        #print mean_abs_error
+
         assert mean_abs_error <= tolerance, \\
                'true_expectation: %s, test mean: %s' % \\
                (exresult, np.mean(estimates))

@@ -4,13 +4,13 @@ from pystoch import flip, MetropolisHastings
 class UnconditionedFlip(MetropolisHastings):
 
     def __init__(self):
-        pass
+        self.val = None
 
     def query_model(self):
-        pass
+        self.val = int(flip(0.7))
 
     def sample(self):
-        return flip(0.7)
+        return self.val
 
     def condition(self):
         return True
