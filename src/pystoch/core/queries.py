@@ -38,14 +38,12 @@ class MetropolisHastings(object):
 
     @random
     def init_rejection_query(self, PYSTOCHOBJ):
-        print "Initializing...",
         test = False
         while (not test):
             PYSTOCHOBJ.clear_trace()
             PYSTOCHOBJ.db = {}
             PYSTOCHOBJ.call(self.query_model)
             test = PYSTOCHOBJ.call(self.condition)
-        print "Done"
 
     def do_trace_update(self, func, db, PYSTOCHOBJ):
         trace_loglh, db, trace = PYSTOCHOBJ.trace_update(func, db)
@@ -67,6 +65,8 @@ class MetropolisHastings(object):
             The PYSTOCHOBJ containing the trace state
 
         """
+
+        PYSTOCHOBJ.running_query = True
 
         num_traces = 0
         num_accepted = 0
@@ -120,22 +120,10 @@ class MetropolisHastings(object):
                     # score the new trace
                     a = new_trace_loglh - trace_loglh + backward - forward
 
-                    # print "ERP:", erp.__name__
-                    # print "Old val:", val
-                    # print "New val:", new_val
-                    # print "Old erp likelihood", erp_loglh
-                    # print "New erp likelihood", new_erp_loglh
-                    # print "Old trace likelihood", trace_loglh
-                    # print "New trace likelihood", new_trace_loglh
-                    # print "a:", a
-                    # print new_db
-
                 except TraceInvalidatedException:
                     # changing the value of the ERP caused the program
                     # to become unrunnable, so reject this trace
                     a = -np.inf
-
-                    print "trace invalidated"
 
                 num_traces += 1
 
@@ -168,9 +156,8 @@ class MetropolisHastings(object):
             num_samples -= 1
             samples.append(sample)
 
-        if num_traces > 0:
-            print "Average acceptance rate: %s%%" % (np.round(float(num_accepted) / num_traces, decimals=4)*100)
-            
+        PYSTOCHOBJ.running_query = False
+
         return samples
 
     def clean_db(self, trace, db):

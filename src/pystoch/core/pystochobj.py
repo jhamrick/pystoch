@@ -83,6 +83,8 @@ class PyStochObj(object):
         self.num_rvs     = None
         self.rvs         = None
         self.trace_loglh = None
+
+        self.running_query = False
             
     def call(self, func, *args, **kwargs):
         """Call a function.
@@ -115,7 +117,7 @@ class PyStochObj(object):
         if hasattr(func, "random") and func.random:
             kwargs['PYSTOCHOBJ'] = self
 
-        if hasattr(func, "erp") and func.erp:
+        if hasattr(func, "erp") and func.erp and self.running_query:
             return self.update_db(func, (args, kwargs))
 
         return func(*args, **kwargs)

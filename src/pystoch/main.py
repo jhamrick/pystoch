@@ -8,7 +8,7 @@ import os
 import sys
 import tempfile
 
-def run(prog, args=[]):
+def run(prog, args=[], localsdict={}):
     PYSTOCHOBJ = PyStochObj()
 
     filename = None
@@ -29,7 +29,7 @@ def run(prog, args=[]):
         tempname = temp.name
 
     try:
-        localsdict = {'PYSTOCHOBJ': PYSTOCHOBJ, 'sys': sys}
+        localsdict.update({'PYSTOCHOBJ': PYSTOCHOBJ, 'sys': sys})
         execfile(filename, localsdict)
     finally:
         if tempname is not None:

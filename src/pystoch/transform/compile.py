@@ -594,7 +594,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         and then pop those values at the end of the function.
 
         """
-        
+                    
         self.newline(extra=1)
         self.decorators(node)
         super(PyStochCompiler, self).newline()
@@ -604,27 +604,30 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.signature(node.args)
         self.write('):')
 
-        self.line.push(0)
-        write_before = [
-            "PYSTOCHOBJ.func_stack.push('%s')" % self._gen_iden(node),
-            "PYSTOCHOBJ.line_stack.push(0)"
+        if len(node.body) == 1 and isinstance(node.body[0], _ast.Pass):
+            self.body(node.body)
+        else:
+            self.line.push(0)
+            write_before = [
+                "PYSTOCHOBJ.func_stack.push('%s')" % self._gen_iden(node),
+                "PYSTOCHOBJ.line_stack.push(0)"
             ]
 
-        # only pop the line and function stacks if there is no return
-        # statement
-        if self.contains_return(node):
-            write_after = None
-        else:
-            write_after = [
-                "PYSTOCHOBJ.line_stack.pop()",
-                "PYSTOCHOBJ.func_stack.pop()"
+            # only pop the line and function stacks if there is no return
+            # statement
+            if self.contains_return(node):
+                write_after = None
+            else:
+                write_after = [
+                    "PYSTOCHOBJ.line_stack.pop()",
+                    "PYSTOCHOBJ.func_stack.pop()"
                 ]
 
-        infunc = self.infunc
-        self.infunc = True
-        self.body(node.body, write_before=write_before, write_after=write_after)
-        self.infunc = infunc
-        self.line.pop()
+            infunc = self.infunc
+            self.infunc = True
+            self.body(node.body, write_before=write_before, write_after=write_after)
+            self.infunc = infunc
+            self.line.pop()
 
         self.insert("%s.random = True" % node.name)
 
@@ -1032,18 +1035,20 @@ class PyStochCompiler(codegen.SourceGenerator):
             super(PyStochCompiler, self).visit_Expr(node)
 
     def visit_Pass(self, node):
-        """Pass keywords are not supported.
+        """Calls the superclass' visit_Pass method.
+
+        See Also
+        --------
+        codegen.SourceCompiler#visit_pass
 
         """
 
-        raise NotImplementedError, "Pass keywords are not supported"
+        self.insert('pass')
 
     # 2) Expressions
 
     def visit_BoolOp(self, node):
-        """Calls the superclass' visit_BoolOp method, while
-        additionally checking to make sure that no Call nodes are
-        present in the node being visited.
+        """Calls the superclass' visit_BoolOp method.
 
         See Also
         --------
@@ -1054,9 +1059,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         super(PyStochCompiler, self).visit_BoolOp(node)
 
     def visit_BinOp(self, node):
-        """Calls the superclass' visit_BinOp method, while
-        additionally checking to make sure that no Call nodes are
-        present in the node being visited.
+        """Calls the superclass' visit_BinOp method.
 
         See Also
         --------
@@ -1069,9 +1072,7 @@ class PyStochCompiler(codegen.SourceGenerator):
         self.write(')')
 
     def visit_UnaryOp(self, node):
-        """Calls the superclass' visit_UnaryOp method, while
-        additionally checking to make sure that no Call nodes are
-        present in the node being visited.
+        """Calls the superclass' visit_UnaryOp method.
 
         See Also
         --------
