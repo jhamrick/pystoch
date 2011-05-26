@@ -1,0 +1,11 @@
+conditioned multinomial
+memoized flip, unconditioned
+bound symbol used inside memoizer, unconditioned
+memoized flip with random argument, unconditioned
+memoized random procedure, unconditioned
+memoized flip in if branch (create/destroy memprocs), unconditioned
+symmetric dirichlet-discrete, unconditioned
+symmetric dirichlet-discrete, conditioned
+CRP third customer at first table, conditioned on second customer at first table
+DPmem of gensym, unconditioned
+varying numbers of xrps inside mem
