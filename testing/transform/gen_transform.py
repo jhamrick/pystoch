@@ -16,29 +16,32 @@ def gentests(dir="testfiles"):
         sys.exit(0)
 
     gen = open('transform.py', 'w')
-    gen.write('''import pystoch
+    gen.write("""import pystoch
 import unittest
 import sys
 
 class TestTransform(unittest.TestCase):
 
-''')
+    def _run_test(self, filename):
+        pythonlocals = {}
+        execfile(filename, pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run(filename)
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+""")
     
     for testfile in testfiles:
         back = len('.py')
         name = 'test_' + os.path.basename(testfile)[:-back]
         
         gen.write("""    def %s(self):
-        pythonlocals = {}
-        execfile('%s', pythonlocals)
-        pythonresult = pythonlocals['result']
+        self._run_test('%s')
 
-        pystochlocals = pystoch.run('%s')
-        pystochresult = pystochlocals['result']
-
-        assert pythonresult == pystochresult
-
-""" % (name, testfile, testfile))
+""" % (name, testfile  ))
 
     gen.write('''if __name__ == "__main__":
     testlist = unittest.TestSuite()

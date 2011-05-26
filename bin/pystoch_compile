@@ -11,7 +11,7 @@ generator.compile(infile)
 transform = generator.source
 
 if infile.endswith(".py"):
-    outfile = infile.rstrip(".py") + ".pystoch"
+    outfile = infile[:-3] + ".pystoch"
 else:
     outfile = infile + ".pystoch"
     
