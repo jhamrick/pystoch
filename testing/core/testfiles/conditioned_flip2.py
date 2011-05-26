@@ -8,9 +8,9 @@ class Query(MetropolisHastings):
 
     def bit_flip(self, fidelity, x):
         if x:
-            flip(fidelity)
+            return flip(fidelity)
         else:
-            flip(1 - fidelity)
+            return flip(1 - fidelity)
 
     def query_model(self):
         self.hyp = flip(0.7)
