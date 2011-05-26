@@ -100,21 +100,29 @@ class PyUnitframework(unittest.TestCase):
 		self.assertRaises(Exception,pystoch.uniform,'TestStr4','TestStr4')
 	def test_45_uniform_WithArgs_Fail_With_Args_Than_Specified(self):
 		self.assertRaises(Exception,pystoch.uniform,5,False,'TestStr2')
-	def test_46_insert_WithoutArgs_Fail_Without_Arg(self):
+	def test_46_compile_WithoutArgs_Fail_Without_Arg(self):
+		self.assertRaises(Exception,pystoch.PyStochCompiler().compile)
+	def test_47_compile_WithArgs_Pass_With_Only_Valid_Arguments(self):
+		pystoch.PyStochCompiler().compile('TestStr')
+	def test_48_compile_WithArgs_Fail_With_OneInvalid_Arg(self):
+		self.assertRaises(Exception,pystoch.PyStochCompiler().compile,20.11)
+	def test_49_compile_WithArgs_Fail_With_Args_Than_Specified(self):
+		self.assertRaises(Exception,pystoch.PyStochCompiler().compile,'TestStr','TestStr2')
+	def test_50_insert_WithoutArgs_Fail_Without_Arg(self):
 		self.assertRaises(Exception,pystoch.PyStochCompiler().insert)
-	def test_47_insert_WithArgs_Pass_With_Only_Valid_Arguments(self):
+	def test_51_insert_WithArgs_Pass_With_Only_Valid_Arguments(self):
 		pystoch.PyStochCompiler().insert('TestStr')
-	def test_48_insert_WithArgs_Fail_With_OneInvalid_Arg(self):
+	def test_52_insert_WithArgs_Fail_With_OneInvalid_Arg(self):
 		self.assertRaises(Exception,pystoch.PyStochCompiler().insert,20.11)
-	def test_49_insert_WithArgs_Fail_With_Args_Than_Specified(self):
+	def test_53_insert_WithArgs_Fail_With_Args_Than_Specified(self):
 		self.assertRaises(Exception,pystoch.PyStochCompiler().insert,'TestStr','TestStr2')
-	def test_50_print_trace_WithoutArgs_Pass_With_Only_Valid_Arguments(self):
+	def test_54_print_trace_WithoutArgs_Pass_With_Only_Valid_Arguments(self):
 		pystoch.PyStochObj().print_trace()
-	def test_51_print_trace_WithArgs_Fail_With_Arg(self):
+	def test_55_print_trace_WithArgs_Fail_With_Arg(self):
 		self.assertRaises(Exception,pystoch.PyStochObj().print_trace,'TestStr0')
-	def test_52_clear_trace_WithoutArgs_Pass_With_Only_Valid_Arguments(self):
+	def test_56_clear_trace_WithoutArgs_Pass_With_Only_Valid_Arguments(self):
 		pystoch.PyStochObj().clear_trace()
-	def test_53_clear_trace_WithArgs_Fail_With_Arg(self):
+	def test_57_clear_trace_WithArgs_Fail_With_Arg(self):
 		self.assertRaises(Exception,pystoch.PyStochObj().clear_trace,'TestStr0')
 
 if __name__=="__main__":

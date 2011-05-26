@@ -5,7 +5,7 @@ import sys
 
 def gentests(dir="testfiles"):
     # get a list of all of the tests
-    testfiles = [os.path.join(dir, test) for test \
+    testfiles = [os.path.join(os.getcwd(), dir, test) for test \
                  in os.listdir(dir) \
                  if test.endswith(".py") and \
                  not test.startswith(".#")]
