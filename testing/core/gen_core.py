@@ -73,14 +73,18 @@ class TestCore(unittest.TestCase):
 
 """ % (name, testfile  ))
 
-    gen.write('''if __name__ == "__main__":
+    gen.write("""if __name__ == '__main__':
     testlist = unittest.TestSuite()
-    testlist.addTest(unittest.makeSuite(TestCore))
+    if len(sys.argv) > 1:
+        for test in sys.argv[1:]:
+            testlist.addTest(TestCore('test_' + test))
+    else:
+        testlist.addTest(unittest.makeSuite(TestCore))
     result = unittest.TextTestRunner(verbosity=2).run(testlist)
     if not result.wasSuccessful():
         sys.exit(1)
     sys.exit(0)
-    ''')
+    """)
 
     gen.close()
     

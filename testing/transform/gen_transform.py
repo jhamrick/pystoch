@@ -45,7 +45,11 @@ class TestTransform(unittest.TestCase):
 
     gen.write('''if __name__ == "__main__":
     testlist = unittest.TestSuite()
-    testlist.addTest(unittest.makeSuite(TestTransform))
+    if len(sys.argv) > 1:
+        for test in sys.argv[1:]:
+            testlist.addTest(TestTransform('test_' + test))
+    else:
+        testlist.addTest(unittest.makeSuite(TestTransform))
     result = unittest.TextTestRunner(verbosity=2).run(testlist)
     if not result.wasSuccessful():
         sys.exit(1)
