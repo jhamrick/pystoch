@@ -57,7 +57,7 @@ def _beta_kernel_prob(new_val, val, a, b):
     return _beta_pdf(new_val, a, b)
 
 @erp
-@prob(_beta_pmf)
+@prob(_beta_pdf)
 @kernel(_beta_kernel, _beta_kernel_prob)
 def beta(a, b):
     """Draw a sample from the Beta distribution over ``[0, 1]``.  The
