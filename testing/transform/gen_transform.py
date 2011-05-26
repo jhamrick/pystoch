@@ -15,7 +15,7 @@ def gentests(dir="testfiles"):
         print "No test files, exiting."
         sys.exit(0)
 
-    gen = open('test_transform.py', 'w')
+    gen = open('transform.py', 'w')
     gen.write('''import pystoch
 import unittest
 import sys
@@ -51,8 +51,7 @@ class TestTransform(unittest.TestCase):
 
     gen.close()
     
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        gentests(sys.argv[1])
-    else:
-        gentests()
+if len(sys.argv) > 1:
+    gentests(sys.argv[1])
+else:
+    gentests()

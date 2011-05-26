@@ -1,0 +1,21 @@
+#!/usr/bin/python
+
+import os
+import subprocess as sp
+
+dirs = [x for x in os.listdir('.') if os.path.isdir(x)]
+for testdir in dirs:
+    files = os.listdir(testdir)
+    if 'gen_%s.py' % testdir in files:
+        os.chdir(testdir)
+        sp.call(['python', 'gen_%s.py' % testdir])
+        os.chdir('..')
+
+
+
+
+
+
+
+
+

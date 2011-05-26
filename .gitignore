@@ -1,4 +1,6 @@
-transform/test_transform.py
+testing/transform/transform.py
+testing/basic/basic.py
+testing/core/core.py
 *~
 #*
 *.pyc

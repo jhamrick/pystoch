@@ -3,15 +3,26 @@
 import os
 import unittest
 import sys
+import subprocess as sp
 
-from pytestgen_pystoch import PyUnitframework
-from transform.test_transform import TestTransform
+print "Regenerating tests... ",
+sp.call(['./genall'])
+print "done"
 
 testlist = unittest.TestSuite()
-testlist.addTest(unittest.makeSuite(PyUnitframework))
-testlist.addTest(unittest.makeSuite(TestTransform))
-result = unittest.TextTestRunner(verbosity=2).run(testlist)
 
+dirs = [x for x in os.listdir('.') if os.path.isdir(x)]
+for testdir in dirs:
+    files = os.listdir(testdir)
+    if '%s.py' % testdir in files:
+        os.chdir(testdir)
+        exec('from %s.%s import Test%s' % \
+             (testdir, testdir, testdir.capitalize()))
+        exec('testlist.addTest(unittest.makeSuite(Test%s))' \
+             % testdir.capitalize())
+        os.chdir('..')
+
+result = unittest.TextTestRunner(verbosity=2).run(testlist)
 if not result.wasSuccessful():
     sys.exit(1)
 sys.exit(0)
