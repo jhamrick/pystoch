@@ -1043,6 +1043,9 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
+        if not isinstance(node, _ast.AST):
+            raise ValueError, "node must be an instance of _ast.AST"
+
         self.insert('pass')
 
     # 2) Expressions
