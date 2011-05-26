@@ -1,58 +1,214 @@
-import datetime
-import os
 import pystoch
-import re
-import traceback
 import unittest
+import sys
 
 class TestTransform(unittest.TestCase):
 
-    def setUp(self):
-        # get a list of all of the tests
-        testfiles = [os.path.join("tests", test) for test \
-                     in os.listdir("tests") \
-                     if test.endswith(".py") and \
-                     not test.startswith(".#")]
-        testfiles.sort()
+    def test_bottles_of_beer(self):
+        pythonlocals = {}
+        execfile('testfiles/bottles_of_beer.py', pythonlocals)
+        pythonresult = pythonlocals['result']
 
-        def gentest(test):
-            def mytest(self):
-                # test the python code
-                try:
-                    execfile(test)
-                    pythonlocals = locals()
-                    pythonresult = pythonlocals['result']
-                except:
-                    pythonresult = traceback.format_exc()
-                    testfailed = True
+        pystochlocals = pystoch.run('testfiles/bottles_of_beer.py')
+        pystochresult = pystochlocals['result']
 
-                # run the python code as pystoch code
-                try:
-                    pystochlocals = pystoch.run(test)
-                    pystochresult = pystochlocals['result']
-                except:
-                    pystochresult = traceback.format_exc()
-                    testfailed = True
+        assert pythonresult == pystochresult
 
-        for testfile in testfiles:
-            back = len(".py")
-            name = os.path.basename(testfile)[:-back]
-            setattr(self, "test_%s" % name, gentest(name))
-        
+    def test_classes(self):
+        pythonlocals = {}
+        execfile('testfiles/classes.py', pythonlocals)
+        pythonresult = pythonlocals['result']
 
-        # read all of the tests in and stick the code in a dictionary
-        tests = {}
-        for testfile in testfiles:
-            tests[name] = testfile
+        pystochlocals = pystoch.run('testfiles/classes.py')
+        pystochresult = pystochlocals['result']
 
+        assert pythonresult == pystochresult
 
-    testfailed = testfailed or (pythonresult != pystochresult)
-    print_results(testname, pythonresult, pythontime,
-                  pystochresult, pystochtime, testfailed)
+    def test_conditionals(self):
+        pythonlocals = {}
+        execfile('testfiles/conditionals.py', pythonlocals)
+        pythonresult = pythonlocals['result']
 
-    if testfailed:
-        failed.append(testname)
-    else:
-        passed.append(testname)
+        pystochlocals = pystoch.run('testfiles/conditionals.py')
+        pystochresult = pystochlocals['result']
 
-    print
+        assert pythonresult == pystochresult
+
+    def test_eight_queens(self):
+        pythonlocals = {}
+        execfile('testfiles/eight_queens.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/eight_queens.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_enumerate(self):
+        pythonlocals = {}
+        execfile('testfiles/enumerate.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/enumerate.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_fibonacci(self):
+        pythonlocals = {}
+        execfile('testfiles/fibonacci.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/fibonacci.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_function1(self):
+        pythonlocals = {}
+        execfile('testfiles/function1.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/function1.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_function2(self):
+        pythonlocals = {}
+        execfile('testfiles/function2.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/function2.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_function_composition1(self):
+        pythonlocals = {}
+        execfile('testfiles/function_composition1.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/function_composition1.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_function_composition2(self):
+        pythonlocals = {}
+        execfile('testfiles/function_composition2.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/function_composition2.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_functions(self):
+        pythonlocals = {}
+        execfile('testfiles/functions.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/functions.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_generators(self):
+        pythonlocals = {}
+        execfile('testfiles/generators.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/generators.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_itertools(self):
+        pythonlocals = {}
+        execfile('testfiles/itertools.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/itertools.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_list_comprehension(self):
+        pythonlocals = {}
+        execfile('testfiles/list_comprehension.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/list_comprehension.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_mapreduce(self):
+        pythonlocals = {}
+        execfile('testfiles/mapreduce.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/mapreduce.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_output(self):
+        pythonlocals = {}
+        execfile('testfiles/output.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/output.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_primes(self):
+        pythonlocals = {}
+        execfile('testfiles/primes.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/primes.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_regular_expressions(self):
+        pythonlocals = {}
+        execfile('testfiles/regular_expressions.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/regular_expressions.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_stocks(self):
+        pythonlocals = {}
+        execfile('testfiles/stocks.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/stocks.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+    def test_xml_parsing(self):
+        pythonlocals = {}
+        execfile('testfiles/xml_parsing.py', pythonlocals)
+        pythonresult = pythonlocals['result']
+
+        pystochlocals = pystoch.run('testfiles/xml_parsing.py')
+        pystochresult = pystochlocals['result']
+
+        assert pythonresult == pystochresult
+
+if __name__ == "__main__":
+    testlist = unittest.TestSuite()
+    testlist.addTest(unittest.makeSuite(TestTransform))
+    result = unittest.TextTestRunner(verbosity=2).run(testlist)
+    if not result.wasSuccessful():
+        sys.exit(1)
+    sys.exit(0)
+    

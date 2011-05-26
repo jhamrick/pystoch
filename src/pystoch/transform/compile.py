@@ -181,7 +181,7 @@ class PyStochCompiler(codegen.SourceGenerator):
 
         """
 
-        if not isinstance(src, string):
+        if not isinstance(src, str):
             raise ValueError("src must be a string")
 
         # read in the source from a file

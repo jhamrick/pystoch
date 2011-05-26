@@ -19,27 +19,23 @@ class Stack(object):
         return self.stack.pop()
 
     def push(self, elmt):
-        if not isinstance(elmt, stacktype):
-            raise ValueError("elmt must be a %s" % stacktype)
+        if not isinstance(elmt, self.stacktype):
+            raise ValueError("elmt must be a %s" % self.stacktype)
         self.stack.append(elmt)
 
     def set(self, val):
-        if not isinstance(val, stacktype):
-            raise ValueError("val must be a %s" % stacktype)
+        if not isinstance(val, self.stacktype):
+            raise ValueError("val must be a %s" % self.stacktype)
         if len(self.stack) == 0:
             raise IndexError, "setting empty stack"
         self.stack[-1] = val
 
     def increment(self):
-        if not isinstance(val, int) or isinstance(val, bool):
-            raise ValueError("val must be a %s" % stacktype)
         if len(self.stack) == 0:
             raise IndexError, "incrementing empty stack"
         self.stack[-1] += 1
 
     def decrement(self):
-        if not isinstance(val, int) or isinstance(val, bool):
-            raise ValueError("val must be a %s" % stacktype)
         if len(self.stack) == 0:
             raise IndexError, "decrementing empty stack"
         self.stack[-1] -= 1
