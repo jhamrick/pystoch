@@ -37,19 +37,27 @@ class MetropolisHastings(object):
         pass
 
     @random
-    def init_rejection_query(self, PYSTOCHOBJ):
-        test = False
-        while (not test):
+    def init_rejection_query(self, PYSTOCHOBJ=None):
+        self._condition = False
+        while not self._condition:
             PYSTOCHOBJ.clear_trace()
             PYSTOCHOBJ.db = {}
             PYSTOCHOBJ.call(self.query_model)
-            test = PYSTOCHOBJ.call(self.condition)
+            self._condition = PYSTOCHOBJ.call(self.condition)
+        self._sample = PYSTOCHOBJ.call(self.sample)
 
-    def do_trace_update(self, func, db, PYSTOCHOBJ):
+    @random
+    def run_query_model(self, PYSTOCHOBJ=None):
+        PYSTOCHOBJ.call(self.query_model)
+        self._condition = PYSTOCHOBJ.call(self.condition)
+        self._sample = PYSTOCHOBJ.call(self.sample)
+
+    @random
+    def do_trace_update(self, func, db, PYSTOCHOBJ=None):
         PYSTOCHOBJ.running_query = True
         trace_loglh, db, trace = PYSTOCHOBJ.trace_update(func, db)
         PYSTOCHOBJ.running_query = False
-        if not PYSTOCHOBJ.call(self.condition):
+        if not self._condition:
             trace_loglh = -np.inf
         return trace_loglh, db, trace
 
@@ -75,7 +83,7 @@ class MetropolisHastings(object):
         # query; this starts off the MCMC from a state that we know is
         # acceptable
         trace_loglh, db, trace = self.do_trace_update(self.init_rejection_query, {}, PYSTOCHOBJ)
-        sample = PYSTOCHOBJ.call(self.sample)
+        sample = self._sample
 
         # initialize the list of samples that we will return
         samples = []
@@ -116,7 +124,7 @@ class MetropolisHastings(object):
                 new_db[name] = (erp, new_val, new_erp_loglh, args_db, trace)
 
                 try:
-                    new_trace_loglh, new_db, new_trace = self.do_trace_update(self.query_model, new_db, PYSTOCHOBJ)
+                    new_trace_loglh, new_db, new_trace = self.do_trace_update(self.run_query_model, new_db, PYSTOCHOBJ)
                     # score the new trace
                     a = new_trace_loglh - trace_loglh + backward - forward
 
@@ -136,7 +144,7 @@ class MetropolisHastings(object):
                     db = new_db
                     trace = new_trace
                     trace_loglh = new_trace_loglh
-                    sample = PYSTOCHOBJ.call(self.sample)                    
+                    sample = self._sample
                     
                     # clean out the database of stale values
                     db = self.clean_db(trace, db)

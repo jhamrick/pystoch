@@ -7,8 +7,8 @@ pystoch.core
 __all__ = ['erps', 'memoization', 'pystochobj', 'queries']
 
 import erps
-from erps import binomial, exponential, flip, gamma, gaussian, poisson, uniform, sample_integer, uniform_draw
-__all__.extend(['binomial', 'exponential', 'flip', 'gamma', 'gaussian', 'poisson', 'uniform', 'sample_integer', 'uniform_draw'])
+from erps import beta, binomial, exponential, flip, gamma, gaussian, poisson, uniform, sample_integer, uniform_draw
+__all__.extend(['beta', 'binomial', 'exponential', 'flip', 'gamma', 'gaussian', 'poisson', 'uniform', 'sample_integer', 'uniform_draw'])
 
 import memoization
 from memoization import dp_mem

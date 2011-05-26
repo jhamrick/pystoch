@@ -190,9 +190,9 @@ class PyStochObj(object):
         """
         
         # calculate the name of the current random choice
-        name = "%s-%s-%s" % (self.func_stack.peek(),
-                             self.line_stack.peek(),
-                             self.loop_stack.peek())
+        name = "%s-%s-%s" % (hash(self.func_stack),
+                             hash(self.line_stack),
+                             hash(self.loop_stack))
 
         # look up the name in the database
         if name in self.db:

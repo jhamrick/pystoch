@@ -45,6 +45,10 @@ class Stack(object):
             return self.stack[-1]
         return 'null'
 
+    def __hash__(self):
+        stack = [str(item) for item in self.stack]
+        return hash(''.join(stack))
+
     def __str__(self):
         return str(self.stack)
 
