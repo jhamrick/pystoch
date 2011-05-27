@@ -212,7 +212,7 @@ class PyStochObj(object):
             # with are not the same as those stored in the database
             if args_curr != args_db:
 
-                logger.debug("args changed, rescoring")
+                logger.debug("%s: args changed, rescoring" % name)
                 
                 # rescore the log likelihood by drawing from the
                 # probability density/mass function for the ERP
@@ -222,7 +222,7 @@ class PyStochObj(object):
 
         # if the erp type changed, then we need to resample
         else:
-            logger.debug("sampling new randomness")
+            logger.debug("%s: sampling new randomness" % name)
             
             # sample a new value from the distribution and calculate
             # its log likelihood

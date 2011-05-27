@@ -18,7 +18,7 @@ def run(prog, args=[], localsdict={}, verbose=False):
         
     logger = logging.getLogger('pystoch')
     logger.setLevel(loglevel)
-    ch = logging.StreamHandler()
+    ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(loglevel)
     logger.addHandler(ch)
     logger.debug('set loglevel to %s' % loglevel)

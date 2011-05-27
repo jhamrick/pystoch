@@ -8,6 +8,7 @@ import logging
 logger = logging.getLogger('pystoch')
 
 import numpy as np
+import pdb
 
 from . import erps
 from ..utilities.exceptions import TraceInvalidatedException
@@ -61,6 +62,7 @@ class MetropolisHastings(object):
         trace_loglh, db, trace = PYSTOCHOBJ.trace_update(func, db)
         PYSTOCHOBJ.running_query = False
         if not self._condition:
+            logger.debug("condition not met!")
             trace_loglh = -np.inf
         return trace_loglh, db, trace
 
@@ -184,6 +186,8 @@ class MetropolisHastings(object):
                     PYSTOCHOBJ.num_rvs = num_rvs
 
                     logger.debug('REJECTED')
+
+                logger.debug('')
                     
                 # update the number of steps we have to go
                 steps -= 1

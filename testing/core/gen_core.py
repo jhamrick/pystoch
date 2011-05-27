@@ -37,7 +37,8 @@ class TestCore(unittest.TestCase):
                 'LAG' : 20,
                 'TOLERANCE': 0.07
             }
-            pystochlocals = pystoch.run(filename, localsdict=localsdict)
+            pystochlocals = pystoch.run(
+                filename, localsdict=localsdict)
             result = pystochlocals['result']
             exresult = pystochlocals['exresult']
             results.append(result)
@@ -57,8 +58,9 @@ class TestCore(unittest.TestCase):
         mean_abs_error = np.round(np.mean(errors), decimals=5)
         std_error = np.std(errors)
 
-        msg = 'true expectation: %s\\n' % exresult
+        msg = 'result not within expected bounds!\\n\\n'
         msg += 'test mean: %s\\n' % np.mean(estimates)
+        msg += 'true expectation: %s\\n' % exresult
         msg += 'mean error: %s\\n' % mean_abs_error
         msg += 'tolerance: %s\\n' % tolerance
         msg += 'estimates: %s\\n' % estimates

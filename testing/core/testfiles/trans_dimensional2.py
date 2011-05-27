@@ -1,5 +1,6 @@
 import pystoch
-from pystoch import flip, exponential, gaussian, MetropolisHastings
+from pystoch import flip, exponential, gaussian,\
+     MetropolisHastings, truehist
 
 class Query(MetropolisHastings):
 
@@ -22,4 +23,4 @@ class Query(MetropolisHastings):
         return self.b > 0.7
 
 result = Query().run(SAMPLES, LAG)
-exresult = 0.571
+exresult = 0.699
