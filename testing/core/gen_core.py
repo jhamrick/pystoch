@@ -32,7 +32,7 @@ class TestCore(unittest.TestCase):
         exresults = []
         for i in xrange(RUNS):
             localsdict = {
-                'SAMPLES' : 100,
+                'SAMPLES' : 300,
                 'LAG' : 20,
                 'TOLERANCE' : 0.07
             }
