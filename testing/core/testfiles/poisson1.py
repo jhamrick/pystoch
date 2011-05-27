@@ -1,6 +1,7 @@
 import pystoch
 from pystoch import poisson, MetropolisHastings
 
+TOLERANCE = 0.1
 lam = 1
 
 class Query(MetropolisHastings):
