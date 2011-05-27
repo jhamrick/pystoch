@@ -7,6 +7,9 @@ pystoch.core.pystochobj
 from ..utilities.stack import StringStack, IntegerStack
 from ..utilities.exceptions import TraceInvalidatedException
 
+import logging
+logger = logging.getLogger('pystoch')
+
 import numpy as np
 
 class PyStochObj(object):
@@ -209,7 +212,7 @@ class PyStochObj(object):
             # with are not the same as those stored in the database
             if args_curr != args_db:
 
-                #print "args changed, rescoring"
+                logger.debug("args changed, rescoring")
                 
                 # rescore the log likelihood by drawing from the
                 # probability density/mass function for the ERP
@@ -219,7 +222,7 @@ class PyStochObj(object):
 
         # if the erp type changed, then we need to resample
         else:
-            #print "sampling new randomness"
+            logger.debug("sampling new randomness")
             
             # sample a new value from the distribution and calculate
             # its log likelihood

@@ -4,6 +4,9 @@ pystoch.core.queries
 
 """
 
+import logging
+logger = logging.getLogger('pystoch')
+
 import numpy as np
 
 from . import erps
@@ -65,7 +68,7 @@ class MetropolisHastings(object):
     def run(self, num_samples, num_steps, PYSTOCHOBJ=None):
         """Take samples from the MCMC trace sampler.
 
-        Paramters
+        Parameters
         ---------
         num_samples : int
             The number of samples to take
@@ -100,7 +103,7 @@ class MetropolisHastings(object):
                 rvs = PYSTOCHOBJ.rvs
 
                 rvs.sort()
-                #print "rvs: %s" % rvs
+                logger.debug("rvs: %s" % rvs)
 
                 # uniformly select a random choice
                 name = rvs[np.random.randint(num_rvs)]
@@ -136,27 +139,27 @@ class MetropolisHastings(object):
                     # score the new trace
                     a = (new_trace_loglh - trace_loglh) + (backward - forward)
 
-                    # print "ERP: %s (%s)" % (name, erp.__name__)
-                    # print "Old val:", val
-                    # print "New val:", new_val
-                    # print "Old erp likelihood", erp_loglh
-                    # print "New erp likelihood", new_erp_loglh
-                    # print "Old trace likelihood", trace_loglh
-                    # print "New trace likelihood", new_trace_loglh
-                    # print "Forward", forward
-                    # print "Backward", backward
-                    # print "a:", a
-                    # keys = new_db.keys()
-                    # keys.sort()
-                    # for key in keys:
-                    #     print "%s: %s" % (key, new_db[key])
+                    logger.debug("ERP: %s (%s)" % (name, erp.__name__))
+                    logger.debug("Old val: %s" % val)
+                    logger.debug("New val: %s" % new_val)
+                    logger.debug("Old erp likelihood: %s" % erp_loglh)
+                    logger.debug("New erp likelihood: %s" % new_erp_loglh)
+                    logger.debug("Old trace likelihood: %s" % trace_loglh)
+                    logger.debug("New trace likelihood: %s" % new_trace_loglh)
+                    logger.debug("Forward:  %s" % forward)
+                    logger.debug("Backward: %s" % backward)
+                    logger.debug("a: %s" % a)
+                    keys = new_db.keys()
+                    keys.sort()
+                    for key in keys:
+                        logger.debug("%s: %s" % (key, new_db[key]))
                     
                 except TraceInvalidatedException:
                     # changing the value of the ERP caused the program
                     # to become unrunnable, so reject this trace
                     a = -np.inf
                     
-                    # print "trace invalidated"
+                    logger.debug("trace invalidated")
 
                 num_traces += 1
 
@@ -173,27 +176,27 @@ class MetropolisHastings(object):
                     
                     num_accepted += 1
 
-                    #print 'ACCEPTED'
+                    logger.debug('ACCEPTED')
                     
                 else:
 
                     PYSTOCHOBJ.rvs = rvs
                     PYSTOCHOBJ.num_rvs = num_rvs
 
-                    #print 'REJECTED'
+                    logger.debug('REJECTED')
                     
                 # update the number of steps we have to go
                 steps -= 1
-
-                #print
 
             # update the number of samples we still have to go, and
             # add the current sample to our list of samples
             num_samples -= 1
             samples.append(sample)
 
-        #if len(samples) > 0:
-        #    print "Average acceptance rate: %s%%" % (np.round(float(num_accepted) / num_traces, decimals=4)*100)
+        if len(samples) > 0:
+            logger.debug("Average acceptance rate: %s%%" % \
+                         (np.round(float(num_accepted) / num_traces,
+                                   decimals=4)*100))
 
         return samples
 
