@@ -136,7 +136,7 @@ class MetropolisHastings(object):
                     # score the new trace
                     a = (new_trace_loglh - trace_loglh) + (backward - forward)
 
-                    # print "ERP:", erp.__name__
+                    # print "ERP: %s (%s)" % (name, erp.__name__)
                     # print "Old val:", val
                     # print "New val:", new_val
                     # print "Old erp likelihood", erp_loglh
@@ -198,27 +198,78 @@ class MetropolisHastings(object):
         return samples
 
     def calc_transition_prob(self, erpname, new_db, old_db):
-        if erpname not in new_db:
-            raise TraceInvalidatedException
-        
-        new_erp, new_val, new_erp_loglh, new_args_db, new_trace = new_db[erpname]
-        old_erp, old_val, old_erp_loglh, old_args_db, old_trace = old_db[erpname]
+        """
+        Calculate the log transition probability from an old state
+        (old_db) to a new state (new_db) given the the random variable
+        that was changed (erpname).  This probability is composed of
+        three parts:
 
+        1) The probability that the random variable was chosen.  When
+        a new trace is proposed, a random variable is chosen at random
+        from the set of random variables that were last used, so this
+        probability is just one over the number of random variables.
+
+        2) The probability that the value for the new random variable
+        was chosen given the old value and the parameters.  This is
+        calculated from the ERP's kernel.
+
+        3) The probability of any new randomness that was sampled.
+        Changing the value of a random variable may cause new
+        randomness to be sampled, either by creating new random
+        variables or by changing the type of other random variables.
+
+        Parameters
+        ----------
+        erpname : string
+            The name of the ERP that was changed to yield the
+            transition.
+        new_db : dictionary
+            The new database of randomness after the transition.
+        old_db : dictionary
+            The old database of randomness before the transition.
+
+        """
+        
+        if erpname not in new_db:
+            raise TraceInvalidatedException()
+
+        # lookup the old and new information for the erp
+        new_erp, new_val, new_erp_loglh, \
+                 new_args_db, new_trace = new_db[erpname]
+        old_erp, old_val, old_erp_loglh, \
+                 old_args_db, old_trace = old_db[erpname]
+        
+        # calculate the probability of choosing that RV to flip
         old_numrvs = len(old_db.keys())
         p_choose_rv = np.log(1. / old_numrvs)
-        p_rv_val = np.log(old_erp.kernel.prob(new_val, old_val, *old_args_db[0], **old_args_db[1]))
 
+        # calculate the probability of choosing that value of the RV
+        p_rv_val = np.log(old_erp.kernel.prob(
+            new_val, old_val, *old_args_db[0], **old_args_db[1]))
+
+        # calculate the probability of the new randomness that was
+        # sampled
         p_randomness = 0
         for rv in new_db:
+            # if the random variable wasn't in the old database, then
+            # it's new so we can add its log likelihood
             if rv not in old_db:
                 p_randomness += new_db[rv][2]
             else:
-                new_erp, new_val, new_erp_loglh, new_args_db, new_trace = new_db[rv]
-                old_erp, old_val, old_erp_loglh, old_args_db, old_trace = old_db[rv]
-                
-                if new_args_db != old_args_db:
+                new_erp, new_val, new_erp_loglh, \
+                         new_args_db, new_trace = new_db[rv]
+                old_erp, old_val, old_erp_loglh, \
+                         old_args_db, old_trace = old_db[rv]
+
+                # if the type of the random variable changed, then
+                # it's also new so we can add its log likelihood
+                if new_erp != old_erp:
                     p_randomness += new_erp_loglh
 
+        # and then the transition probability is just the probability
+        # of choosing the random variable, the probability of the
+        # value of the variable, and the probability of the new
+        # randomness
         p_transition = p_choose_rv + p_rv_val + p_randomness
         return p_transition
 
