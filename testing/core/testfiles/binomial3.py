@@ -1,6 +1,8 @@
 import pystoch
 from pystoch import binomial, MetropolisHastings
 
+TOLERANCE = 0.2
+
 n = 10
 p = 0.6
 

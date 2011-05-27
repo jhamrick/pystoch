@@ -21,7 +21,7 @@ import unittest
 import sys
 import numpy as np
 
-RUNS = 1
+RUNS = 5
 
 class TestCore(unittest.TestCase):
 
@@ -30,18 +30,21 @@ class TestCore(unittest.TestCase):
         
         results = []
         exresults = []
+        tolerances = []
         for i in xrange(RUNS):
             localsdict = {
-                'SAMPLES' : 300,
+                'SAMPLES' : 150,
                 'LAG' : 20,
-                'TOLERANCE' : 0.07
+                'TOLERANCE': 0.07
             }
             pystochlocals = pystoch.run(filename, localsdict=localsdict)
             result = pystochlocals['result']
             exresult = pystochlocals['exresult']
-            tolerance = pystochlocals['TOLERANCE']
             results.append(result)
             exresults.append(exresult)
+            tolerances.append(pystochlocals['TOLERANCE'])
+
+        tolerance = np.mean(tolerances)
 
         estimates = []
         errors = []
@@ -54,9 +57,13 @@ class TestCore(unittest.TestCase):
         mean_abs_error = np.round(np.mean(errors), decimals=5)
         std_error = np.std(errors)
 
-        assert mean_abs_error <= tolerance, \\
-               'true expectation: %s, test mean: %s' % \\
-               (exresult, np.mean(estimates))
+        msg = 'true expectation: %s\\n' % exresult
+        msg += 'test mean: %s\\n' % np.mean(estimates)
+        msg += 'mean error: %s\\n' % mean_abs_error
+        msg += 'tolerance: %s\\n' % tolerance
+        msg += 'estimates: %s\\n' % estimates
+        msg += 'errors: %s' % errors
+        assert mean_abs_error <= tolerance, msg
 
 """)
     

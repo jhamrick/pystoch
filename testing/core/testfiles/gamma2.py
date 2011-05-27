@@ -1,10 +1,9 @@
 import pystoch
-from pystoch import binomial, MetropolisHastings
+from pystoch import gamma, MetropolisHastings
 
-TOLERANCE = 0.2
-
-n = 10
-p = 0.8
+TOLERANCE = 0.5
+k = 2
+theta = 2.0
 
 class Query(MetropolisHastings):
 
@@ -15,11 +14,10 @@ class Query(MetropolisHastings):
         pass
 
     def sample(self):
-        global n, p
-        return binomial(n, p)
+        return gamma(k, theta)
 
     def condition(self):
         return True
 
 result = Query().run(SAMPLES, LAG)
-exresult = n * p
+exresult = k * theta

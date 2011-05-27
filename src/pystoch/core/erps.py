@@ -189,9 +189,9 @@ def binomial(n, p):
 
 #########################################################################
 
-def _exponential_pdf(x, scale):
+def _exponential_pdf(x, lam):
     """Probabiliy density function at x for the exponential
-    distribution with scale `scale`.
+    distribution with scale 1 / lam.
 
     See Also
     --------
@@ -199,55 +199,28 @@ def _exponential_pdf(x, scale):
 
     """
     
-    return dists.expon.pdf(x, scale=scale)
+    return dists.expon.pdf(x, scale=(1. / lam))
 
-def _exponential(scale):
-    return np.random.exponential(scale)
+def _exponential(lam):
+    return np.random.exponential(1. / lam)
 
-def _exponential_kernel(val, scale):
-    return _exponential(scale)
+def _exponential_kernel(val, lam):
+    return _exponential(lam)
 
-def _exponential_kernel_prob(new_val, val, scale):
-    return _exponential_pdf(new_val, scale)
+def _exponential_kernel_prob(new_val, val, lam):
+    return _exponential_pdf(new_val, lam)
 
 @erp
 @continuous
 @prob(_exponential_pdf)
 @kernel(_exponential_kernel, _exponential_kernel_prob)
-def exponential(scale):
-    """Draw a sample from an exponential distribution.
-
-    Its probability density function is
+def exponential(lam):
+    """Draw a sample from an exponential distribution with scale 1 /
+    lam.
     
-    .. math:: f(x; \frac{1}{\beta}) = \frac{1}{\beta} \exp(-\frac{x}{\beta}),
-    
-    for ``x > 0`` and 0 elsewhere. :math:`\beta` is the scale
-    parameter, which is the inverse of the rate parameter
-    :math:`\lambda = 1/\beta`.  The rate parameter is an alternative,
-    widely used parameterization of the exponential distribution [3]_.
-    
-    The exponential distribution is a continuous analogue of the
-    geometric distribution.  It describes many common situations, such
-    as the size of raindrops measured over many rainstorms [1]_, or
-    the time between page requests to Wikipedia [2]_.
-    
-    Parameters
-    ----------
-    scale : float
-        The scale parameter, :math:`\beta = 1/\lambda`.
-    
-    References
-    ----------
-    .. [1] Peyton Z. Peebles Jr., "Probability, Random Variables and
-           Random Signal Principles", 4th ed, 2001, p. 57.
-    .. [2] "Poisson Process", Wikipedia,
-           http://en.wikipedia.org/wiki/Poisson_process
-    .. [3] "Exponential Distribution", Wikipedia,
-           http://en.wikipedia.org/wiki/Exponential_distribution
-
     """
     
-    return _exponential(scale)
+    return _exponential(lam)
 
 #########################################################################
 

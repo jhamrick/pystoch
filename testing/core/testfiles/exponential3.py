@@ -1,10 +1,8 @@
 import pystoch
-from pystoch import binomial, MetropolisHastings
+from pystoch import exponential, MetropolisHastings
 
-TOLERANCE = 0.2
-
-n = 10
-p = 0.8
+TOLERANCE = 0.1
+lam = 1.5
 
 class Query(MetropolisHastings):
 
@@ -15,11 +13,11 @@ class Query(MetropolisHastings):
         pass
 
     def sample(self):
-        global n, p
-        return binomial(n, p)
+        global lam
+        return exponential(lam)
 
     def condition(self):
         return True
 
 result = Query().run(SAMPLES, LAG)
-exresult = n * p
+exresult = 1. / lam
