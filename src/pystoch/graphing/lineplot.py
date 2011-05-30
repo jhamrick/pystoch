@@ -6,7 +6,7 @@ pystoch.graphing.lineplot
 
 import numpy as np
 import matplotlib.pyplot as plt
-from .utils import _plot
+from .graphutils import _plot
 
 def lineplot(x, y, title, labels=None, path=None):
 

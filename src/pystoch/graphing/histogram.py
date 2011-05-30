@@ -6,7 +6,7 @@ pystoch.graphing.histogram
 
 import numpy as np
 import matplotlib.pyplot as plt
-from .utils import _plot
+from .graphutils import _plot
 
 def _hist(samples, binkeys=None):
     bins = {}

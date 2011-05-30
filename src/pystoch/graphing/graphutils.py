@@ -1,6 +1,6 @@
 """
-pystoch.graphing.utils
-----------------------
+pystoch.graphing.graphutils
+---------------------------
 
 """
 
