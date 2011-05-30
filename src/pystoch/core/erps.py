@@ -60,20 +60,7 @@ def _beta_kernel_prob(new_val, val, a, b):
 @prob(_beta_pdf)
 @kernel(_beta_kernel, _beta_kernel_prob)
 def beta(a, b):
-    """Draw a sample from the Beta distribution over ``[0, 1]``.  The
-    Beta distribution is a special case of the Dirichlet distribution,
-    and is related to the Gamma distribution.  It has the probability
-    distribution function
-    
-    .. math:: f(x; a,b) = \frac{1}{B(\alpha, \beta)} x^{\alpha - 1}
-                                                     (1 - x)^{\beta - 1},
-    
-    where the normalisation, B, is the beta function,
-    
-    .. math:: B(\alpha, \beta) = \int_0^1 t^{\alpha - 1}
-                                 (1 - t)^{\beta - 1} dt.
-    
-    It is often seen in Bayesian inference and order statistics.
+    """Draw a sample from the Beta distribution over ``[0, 1]``.
     
     Parameters
     ----------
@@ -150,38 +137,9 @@ def binomial(n, p):
     sample : integer
             with the value in the range [0, n]
 
-    Notes
-    -----
-    The probability density for the Binomial distribution is
-
-    .. math:: P(N) = \binom{n}{N}p^N(1-p)^{n-N},
-
-    where :math:`n` is the number of trials, :math:`p` is the
-    probability of success, and :math:`N` is the number of successes.
-
-    When estimating the standard error of a proportion in a population
-    by using a random sample, the normal distribution works well
-    unless the product p*n <=5, where p = population proportion
-    estimate, and n = number of samples, in which case the binomial
-    distribution is used instead. For example, a sample of 15 people
-    shows 4 who are left handed, and 11 who are right handed. Then p =
-    4/15 = 27%. 0.27*15 = 4, so the binomial distribution should be
-    used in this case.
-
-    References
-    ----------
-    .. [1] Dalgaard, Peter, "Introductory Statistics with R",
-           Springer-Verlag, 2002.
-    .. [2] Glantz, Stanton A. "Primer of Biostatistics.", McGraw-Hill,
-           Fifth Edition, 2002.
-    .. [3] Lentner, Marvin, "Elementary Applied Statistics", Bogden
-           and Quigley, 1972.
-    .. [4] Weisstein, Eric W. "Binomial Distribution." From MathWorld--A
-           Wolfram Web Resource.
-           http://mathworld.wolfram.com/BinomialDistribution.html
-    .. [5] Wikipedia, "Binomial-distribution",
-           http://en.wikipedia.org/wiki/Binomial_distribution
-                                              
+    See Also
+    --------
+    numpy.random.binomial
 
     """
 
@@ -217,6 +175,20 @@ def _exponential_kernel_prob(new_val, val, lam):
 def exponential(lam):
     """Draw a sample from an exponential distribution with scale 1 /
     lam.
+
+    Parameters
+    ----------
+    lam : number
+        The inverse scale parameter of the distribution
+
+    Returns
+    -------
+    sample : float
+        A sample from the specified distribution
+
+    See Also
+    --------
+    numpy.random.exponential
     
     """
     
@@ -261,6 +233,11 @@ def flip(weight=0.5):
     ----------
     weight : float (default=0.5)
         The weight of the coin, in the interval [0, 1].
+
+    Returns
+    -------
+    sample : bool
+        True with probability `weight`
 
     """
 
@@ -322,27 +299,9 @@ def gamma(k, theta):
     out : float
         A sample drawn from the gamma distribution.
     
-    Notes
-    -----
-    The probability density for the Gamma distribution is
-    
-    .. math:: p(x) = x^{k-1}\frac{e^{-x/\theta}}{\theta^k\Gamma(k)},
-    
-    where :math:`k` is the shape and :math:`\theta` the scale, and
-    :math:`\Gamma` is the Gamma function.
-    
-    The Gamma distribution is often used to model the times to failure
-    of electronic components, and arises naturally in processes for
-    which the waiting times between Poisson distributed events are
-    relevant.
-    
-    References
-    ----------
-    .. [1] Weisstein, Eric W. "Gamma Distribution." From MathWorld--A
-           Wolfram Web Resource.
-           http://mathworld.wolfram.com/GammaDistribution.html
-    .. [2] Wikipedia, "Gamma-distribution",
-           http://en.wikipedia.org/wiki/Gamma-distribution
+    See Also
+    --------
+    numpy.random.gamma
 
     """
 
@@ -377,49 +336,22 @@ def _gaussian_kernel_prob(new_val, val, mean, std):
 @kernel(_gaussian_kernel, _gaussian_kernel_prob)
 def gaussian(mean, std):
     """Draw a random sample from a normal (Gaussian) distribution.
-    
-    The probability density function of the normal distribution, first
-    derived by De Moivre and 200 years later by both Gauss and Laplace
-    independently [2]_, is often called the bell curve because of its
-    characteristic shape (see the example below).
-    
-    The normal distributions occurs often in nature.  For example, it
-    describes the commonly occurring distribution of samples
-    influenced by a large number of tiny, random disturbances, each
-    with its own unique distribution [2]_.
-    
+        
     Parameters
     ----------
     mean : float
         Mean ("centre") of the distribution.
     std : float
         Standard deviation (spread or "width") of the distribution.
-    
-    Notes
-    -----
-    The probability density for the Gaussian distribution is
-    
-    .. math:: p(x) = \frac{1}{\sqrt{ 2 \pi \sigma^2 }}
-                     e^{ - \frac{ (x - \mu)^2 } {2 \sigma^2} },
-    
-    where :math:`\mu` is the mean and :math:`\sigma` the standard
-    deviation.  The square of the standard deviation,
-    :math:`\sigma^2`, is called the variance.
-    
-    The function has its peak at the mean, and its "spread"
-    increases with the standard deviation (the function reaches 0.607
-    times its maximum at :math:`x + \sigma` and :math:`x - \sigma`
-    [2]_).  This implies that `pystoch.erps.gaussian` is more likely
-    to return samples lying close to the mean, rather than those far
-    away.
-    
-    References
-    ----------
-    .. [1] Wikipedia, "Normal distribution",
-           http://en.wikipedia.org/wiki/Normal_distribution
-    .. [2] P. R. Peebles Jr., "Central Limit Theorem" in "Probability, Random
-           Variables and Random Signal Principles", 4th ed., 2001,
-           pp. 51, 51, 125.
+
+    Returns
+    -------
+    sample : float
+        A sample drawn from the specified Gaussian
+
+    See Also
+    --------
+    numpy.random.gaussian
 
     """
 
@@ -467,20 +399,9 @@ def poisson(lam):
     k : integer
         The number of occurrences
 
-    Notes
-    -----
-    If the expected number of occurrences in this interval is lambda,
-    then the probability that there are exactly k occurrences (k being
-    a non-negative integer, k = 0, 1, 2, ...) is equal to f(k,
-    \lambda)=\frac{\lambda^k e^{-\lambda}}{k!},\,\!
-
-    As the lambda parameter gets larger, the Poisson distribution
-    approaches a Gaussian distribution (see pystoch.erps.gaussian).
-
-    References
-    ----------
-    .. [1] Wikipedia, "Poisson distribution",
-           http://en.wikipedia.org/wiki/Poisson_distribution
+    See Also
+    --------
+    numpy.random.poisson
            
     """
     
@@ -531,13 +452,9 @@ def uniform(low, high):
     out : float
         Drawn sample
     
-    Notes
-    -----
-    The probability density function of the uniform distribution is
-    
-    .. math:: p(x) = \frac{1}{b - a}
-    
-    anywhere within the interval ``[a, b)``, and zero elsewhere.
+    See Also
+    --------
+    numpy.random.uniform
 
     """
     
@@ -564,6 +481,23 @@ def _sample_integer_kernel_prob(new_val, val, low, high):
 @prob(_sample_integer_pmf)
 @kernel(_sample_integer_kernel, _sample_integer_kernel_prob)
 def sample_integer(low, high):
+    """Uniformly sample an integer in the range ``[low, high)`` (low
+    inclusive, high exclusive).
+
+    Parameters
+    ----------
+    low : int
+        The inclusive lower bound
+    high : int
+        The exclusive upper bound
+
+    Returns
+    -------
+    sample : int
+        An integer in the range ``[low, high)``
+
+    """
+    
     return _sample_integer(low, high)
 
 #########################################################################
