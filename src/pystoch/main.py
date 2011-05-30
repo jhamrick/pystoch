@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-from pystoch import PyStochObj
-from pystoch import PyStochCompiler
+from pystoch.core import PyStochObj
+from pystoch.transform import PyStochCompiler
 
 import argparse
 import logging
