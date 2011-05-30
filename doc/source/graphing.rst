@@ -1,0 +1,4 @@
+.. automodule:: pystoch.graphing
+   :members:
+
+
