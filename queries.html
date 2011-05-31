@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Inference Queries &mdash; PyStoch v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyStoch v1.0 documentation" href="index.html" />
+    <link rel="up" title="Source Documentation" href="module.html" />
+    <link rel="next" title="Source Transformation" href="transform.html" />
+    <link rel="prev" title="Memoization Functions" href="memoization.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="transform.html" title="Source Transformation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="memoization.html" title="Memoization Functions"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyStoch v1.0 documentation</a> &raquo;</li>
+          <li><a href="module.html" accesskey="U">Source Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pystoch.core.queries">
+<span id="inference-queries"></span><h1>Inference Queries<a class="headerlink" href="#module-pystoch.core.queries" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="pystoch-core-queries">
+<h2>pystoch.core.queries<a class="headerlink" href="#pystoch-core-queries" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pystoch.core.queries.MetropolisHastings">
+<em class="property">class </em><tt class="descclassname">pystoch.core.queries.</tt><tt class="descname">MetropolisHastings</tt><a class="headerlink" href="#pystoch.core.queries.MetropolisHastings" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Methods</p>
+<dl class="method">
+<dt id="pystoch.core.queries.MetropolisHastings.calc_transition_prob">
+<tt class="descname">calc_transition_prob</tt><big>(</big><em>erpname</em>, <em>new_db</em>, <em>old_db</em><big>)</big><a class="headerlink" href="#pystoch.core.queries.MetropolisHastings.calc_transition_prob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the log transition probability from an old state
+(old_db) to a new state (new_db) given the the random variable
+that was changed (erpname).  This probability is composed of
+three parts:</p>
+<p>1) The probability that the random variable was chosen.  When
+a new trace is proposed, a random variable is chosen at random
+from the set of random variables that were last used, so this
+probability is just one over the number of random variables.</p>
+<p>2) The probability that the value for the new random variable
+was chosen given the old value and the parameters.  This is
+calculated from the ERP&#8217;s kernel.</p>
+<p>3) The probability of any new randomness that was sampled.
+Changing the value of a random variable may cause new
+randomness to be sampled, either by creating new random
+variables or by changing the type of other random variables.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>erpname</strong> : string</p>
+<blockquote>
+<div><p>The name of the ERP that was changed to yield the
+transition.</p>
+</div></blockquote>
+<p><strong>new_db</strong> : dictionary</p>
+<blockquote>
+<div><p>The new database of randomness after the transition.</p>
+</div></blockquote>
+<p><strong>old_db</strong> : dictionary</p>
+<blockquote class="last">
+<div><p>The old database of randomness before the transition.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.queries.MetropolisHastings.clean_db">
+<tt class="descname">clean_db</tt><big>(</big><em>trace</em>, <em>db</em><big>)</big><a class="headerlink" href="#pystoch.core.queries.MetropolisHastings.clean_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.queries.MetropolisHastings.do_trace_update">
+<tt class="descname">do_trace_update</tt><big>(</big><em>func</em>, <em>db</em>, <em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.core.queries.MetropolisHastings.do_trace_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.queries.MetropolisHastings.init_rejection_query">
+<tt class="descname">init_rejection_query</tt><big>(</big><em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.core.queries.MetropolisHastings.init_rejection_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.queries.MetropolisHastings.run">
+<tt class="descname">run</tt><big>(</big><em>num_samples</em>, <em>num_steps</em>, <em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.core.queries.MetropolisHastings.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take samples from the MCMC trace sampler.</p>
+<dl class="docutils">
+<dt>num_samples <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of samples to take</dd>
+<dt>num_steps <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of traces to accept between taking samples</dd>
+<dt>PYSTOCHOBJ <span class="classifier-delimiter">:</span> <span class="classifier">pystoch.PyStochObj</span></dt>
+<dd>The PYSTOCHOBJ containing the trace state</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.queries.MetropolisHastings.run_query_model">
+<tt class="descname">run_query_model</tt><big>(</big><em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.core.queries.MetropolisHastings.run_query_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pystoch.core.queries.RejectionQuery">
+<em class="property">class </em><tt class="descclassname">pystoch.core.queries.</tt><tt class="descname">RejectionQuery</tt><a class="headerlink" href="#pystoch.core.queries.RejectionQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Methods</p>
+<dl class="method">
+<dt id="pystoch.core.queries.RejectionQuery.run">
+<tt class="descname">run</tt><big>(</big><em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.core.queries.RejectionQuery.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.core.queries.random">
+<tt class="descclassname">pystoch.core.queries.</tt><tt class="descname">random</tt><big>(</big><em>func</em><big>)</big><a class="headerlink" href="#pystoch.core.queries.random" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Inference Queries</a><ul>
+<li><a class="reference internal" href="#pystoch-core-queries">pystoch.core.queries</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="memoization.html"
+                        title="previous chapter">Memoization Functions</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="transform.html"
+                        title="next chapter">Source Transformation</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/queries.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="transform.html" title="Source Transformation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="memoization.html" title="Memoization Functions"
+             >previous</a> |</li>
+        <li><a href="index.html">PyStoch v1.0 documentation</a> &raquo;</li>
+          <li><a href="module.html" >Source Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Jessica Hamrick.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

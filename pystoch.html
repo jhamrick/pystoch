@@ -1,0 +1,553 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>PyStoch Module &mdash; PyStoch v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyStoch v1.0 documentation" href="index.html" />
+    <link rel="up" title="Source Documentation" href="module.html" />
+    <link rel="next" title="Core Functionality" href="core.html" />
+    <link rel="prev" title="Source Documentation" href="module.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="core.html" title="Core Functionality"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="module.html" title="Source Documentation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyStoch v1.0 documentation</a> &raquo;</li>
+          <li><a href="module.html" accesskey="U">Source Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="pystoch-module">
+<h1>PyStoch Module<a class="headerlink" href="#pystoch-module" title="Permalink to this headline">¶</a></h1>
+<span class="target" id="module-pystoch"></span><div class="section" id="pystoch">
+<h2>pystoch<a class="headerlink" href="#pystoch" title="Permalink to this headline">¶</a></h2>
+<p>Copyright 2011 Jessica Hamrick</p>
+<dl class="function">
+<dt id="pystoch.beta">
+<tt class="descclassname">pystoch.</tt><tt class="descname">beta</tt><big>(</big><em>a</em>, <em>b</em><big>)</big><a class="headerlink" href="#pystoch.beta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw a sample from the Beta distribution over <tt class="docutils literal"><span class="pre">[0,</span> <span class="pre">1]</span></tt>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>a</strong> : float</p>
+<blockquote>
+<div><p>Alpha, non-negative.</p>
+</div></blockquote>
+<p><strong>b</strong> : float</p>
+<blockquote>
+<div><p>Beta, non-negative.</p>
+</div></blockquote>
+<p><strong>size</strong> : tuple of ints, optional</p>
+<blockquote>
+<div><p>The number of samples to draw.  The ouput is packed according to
+the size given.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>out</strong> : ndarray</p>
+<blockquote class="last">
+<div><p>Array of the given shape, containing values drawn from a
+Beta distribution.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">numpy.random.beta</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.binomial">
+<tt class="descclassname">pystoch.</tt><tt class="descname">binomial</tt><big>(</big><em>n</em>, <em>p</em><big>)</big><a class="headerlink" href="#pystoch.binomial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw a sample from a binomial distribution.</p>
+<p>The sample is drawn from a Binomial distribution with specified
+parameters, n trials and p probability of success where n is an
+integer &gt; 0 and p is in the interval [0,1]. (n may be input as a
+float, but it is truncated to an integer in use)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>n</strong> : float (but truncated to an integer)</p>
+<blockquote>
+<div><p>parameter, &gt; 0.</p>
+</div></blockquote>
+<p><strong>p</strong> : float</p>
+<blockquote>
+<div><p>parameter, &gt;= 0 and &lt;= 1</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>sample</strong> : integer</p>
+<blockquote class="last">
+<div><p>with the value in the range [0, n]</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">numpy.random.binomial</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.exponential">
+<tt class="descclassname">pystoch.</tt><tt class="descname">exponential</tt><big>(</big><em>lam</em><big>)</big><a class="headerlink" href="#pystoch.exponential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw a sample from an exponential distribution with scale 1 /
+lam.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>lam</strong> : number</p>
+<blockquote>
+<div><p>The inverse scale parameter of the distribution</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>sample</strong> : float</p>
+<blockquote class="last">
+<div><p>A sample from the specified distribution</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">numpy.random.exponential</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.flip">
+<tt class="descclassname">pystoch.</tt><tt class="descname">flip</tt><big>(</big><em>weight=0.5</em><big>)</big><a class="headerlink" href="#pystoch.flip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip a fair or biased coin.</p>
+<p>Given the weight, flip a coin and return True if it comes up heads
+and False if it comes up tails.  If weight is not specified, then
+a fair coin is flipped.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>weight</strong> : float (default=0.5)</p>
+<blockquote>
+<div><p>The weight of the coin, in the interval [0, 1].</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>sample</strong> : bool</p>
+<blockquote class="last">
+<div><p>True with probability <cite>weight</cite></p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.gamma">
+<tt class="descclassname">pystoch.</tt><tt class="descname">gamma</tt><big>(</big><em>k</em>, <em>theta</em><big>)</big><a class="headerlink" href="#pystoch.gamma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw a sample from a Gamma distribution.</p>
+<p>A sample is drawn from a Gamma distribution with specified
+parameters, <cite>k</cite> (the shape of the distribution) and <cite>theta</cite> (the
+scale of the distribution), where both parameters are &gt; 0.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>k</strong> : scalar &gt; 0</p>
+<blockquote>
+<div><p>The shape of the gamma distribution.</p>
+</div></blockquote>
+<p><strong>theta</strong> : scalar &gt; 0</p>
+<blockquote>
+<div><p>The scale of the gamma distribution.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>out</strong> : float</p>
+<blockquote class="last">
+<div><p>A sample drawn from the gamma distribution.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">numpy.random.gamma</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.gaussian">
+<tt class="descclassname">pystoch.</tt><tt class="descname">gaussian</tt><big>(</big><em>mean</em>, <em>std</em><big>)</big><a class="headerlink" href="#pystoch.gaussian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw a random sample from a normal (Gaussian) distribution.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>mean</strong> : float</p>
+<blockquote>
+<div><p>Mean (&#8220;centre&#8221;) of the distribution.</p>
+</div></blockquote>
+<p><strong>std</strong> : float</p>
+<blockquote>
+<div><p>Standard deviation (spread or &#8220;width&#8221;) of the distribution.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>sample</strong> : float</p>
+<blockquote class="last">
+<div><p>A sample drawn from the specified Gaussian</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">numpy.random.gaussian</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.poisson">
+<tt class="descclassname">pystoch.</tt><tt class="descname">poisson</tt><big>(</big><em>lam</em><big>)</big><a class="headerlink" href="#pystoch.poisson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw a sample from a poisson distribution.</p>
+<p>Given the <cite>lam</cite> parameter (for lambda), which is both the mean and
+variance of the Poisson distribution, draw a sample from said
+distribution.  The sample corresponds to the number of occurrences.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>lam</strong> : integer</p>
+<blockquote>
+<div><p>The parameter of the poisson distribution</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>k</strong> : integer</p>
+<blockquote class="last">
+<div><p>The number of occurrences</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">numpy.random.poisson</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.uniform">
+<tt class="descclassname">pystoch.</tt><tt class="descname">uniform</tt><big>(</big><em>low</em>, <em>high</em><big>)</big><a class="headerlink" href="#pystoch.uniform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw a sample from a uniform distribution.</p>
+<p>Samples are uniformly distributed over the half-open interval
+<tt class="docutils literal"><span class="pre">[low,</span> <span class="pre">high)</span></tt> (includes low, but excludes high).  In other
+words, any value within the given interval is equally likely to be
+drawn by <cite>uniform</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>low</strong> : float, optional</p>
+<blockquote>
+<div><p>Lower boundary of the output interval.  All values generated will be
+greater than or equal to low.  The default value is 0.</p>
+</div></blockquote>
+<p><strong>high</strong> : float</p>
+<blockquote>
+<div><p>Upper boundary of the output interval.  All values generated will be
+less than high.  The default value is 1.0.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>out</strong> : float</p>
+<blockquote class="last">
+<div><p>Drawn sample</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><tt class="xref py py-obj docutils literal"><span class="pre">numpy.random.uniform</span></tt></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.sample_integer">
+<tt class="descclassname">pystoch.</tt><tt class="descname">sample_integer</tt><big>(</big><em>low</em>, <em>high</em><big>)</big><a class="headerlink" href="#pystoch.sample_integer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniformly sample an integer in the range <tt class="docutils literal"><span class="pre">[low,</span> <span class="pre">high)</span></tt> (low
+inclusive, high exclusive).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>low</strong> : int</p>
+<blockquote>
+<div><p>The inclusive lower bound</p>
+</div></blockquote>
+<p><strong>high</strong> : int</p>
+<blockquote>
+<div><p>The exclusive upper bound</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>sample</strong> : int</p>
+<blockquote class="last">
+<div><p>An integer in the range <tt class="docutils literal"><span class="pre">[low,</span> <span class="pre">high)</span></tt></p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.uniform_draw">
+<tt class="descclassname">pystoch.</tt><tt class="descname">uniform_draw</tt><big>(</big><em>values</em>, <em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.uniform_draw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pystoch.dp_mem">
+<tt class="descclassname">pystoch.</tt><tt class="descname">dp_mem</tt><big>(</big><em>var</em><big>)</big><a class="headerlink" href="#pystoch.dp_mem" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="class">
+<dt id="pystoch.RejectionQuery">
+<em class="property">class </em><tt class="descclassname">pystoch.</tt><tt class="descname">RejectionQuery</tt><a class="headerlink" href="#pystoch.RejectionQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Methods</p>
+<dl class="method">
+<dt id="pystoch.RejectionQuery.run">
+<tt class="descname">run</tt><big>(</big><em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.RejectionQuery.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pystoch.MetropolisHastings">
+<em class="property">class </em><tt class="descclassname">pystoch.</tt><tt class="descname">MetropolisHastings</tt><a class="headerlink" href="#pystoch.MetropolisHastings" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Methods</p>
+<dl class="method">
+<dt id="pystoch.MetropolisHastings.calc_transition_prob">
+<tt class="descname">calc_transition_prob</tt><big>(</big><em>erpname</em>, <em>new_db</em>, <em>old_db</em><big>)</big><a class="headerlink" href="#pystoch.MetropolisHastings.calc_transition_prob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the log transition probability from an old state
+(old_db) to a new state (new_db) given the the random variable
+that was changed (erpname).  This probability is composed of
+three parts:</p>
+<p>1) The probability that the random variable was chosen.  When
+a new trace is proposed, a random variable is chosen at random
+from the set of random variables that were last used, so this
+probability is just one over the number of random variables.</p>
+<p>2) The probability that the value for the new random variable
+was chosen given the old value and the parameters.  This is
+calculated from the ERP&#8217;s kernel.</p>
+<p>3) The probability of any new randomness that was sampled.
+Changing the value of a random variable may cause new
+randomness to be sampled, either by creating new random
+variables or by changing the type of other random variables.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>erpname</strong> : string</p>
+<blockquote>
+<div><p>The name of the ERP that was changed to yield the
+transition.</p>
+</div></blockquote>
+<p><strong>new_db</strong> : dictionary</p>
+<blockquote>
+<div><p>The new database of randomness after the transition.</p>
+</div></blockquote>
+<p><strong>old_db</strong> : dictionary</p>
+<blockquote class="last">
+<div><p>The old database of randomness before the transition.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystoch.MetropolisHastings.clean_db">
+<tt class="descname">clean_db</tt><big>(</big><em>trace</em>, <em>db</em><big>)</big><a class="headerlink" href="#pystoch.MetropolisHastings.clean_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pystoch.MetropolisHastings.do_trace_update">
+<tt class="descname">do_trace_update</tt><big>(</big><em>func</em>, <em>db</em>, <em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.MetropolisHastings.do_trace_update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pystoch.MetropolisHastings.init_rejection_query">
+<tt class="descname">init_rejection_query</tt><big>(</big><em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.MetropolisHastings.init_rejection_query" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pystoch.MetropolisHastings.run">
+<tt class="descname">run</tt><big>(</big><em>num_samples</em>, <em>num_steps</em>, <em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.MetropolisHastings.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take samples from the MCMC trace sampler.</p>
+<dl class="docutils">
+<dt>num_samples <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of samples to take</dd>
+<dt>num_steps <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>The number of traces to accept between taking samples</dd>
+<dt>PYSTOCHOBJ <span class="classifier-delimiter">:</span> <span class="classifier">pystoch.PyStochObj</span></dt>
+<dd>The PYSTOCHOBJ containing the trace state</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystoch.MetropolisHastings.run_query_model">
+<tt class="descname">run_query_model</tt><big>(</big><em>PYSTOCHOBJ=None</em><big>)</big><a class="headerlink" href="#pystoch.MetropolisHastings.run_query_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pystoch.hist">
+<tt class="descclassname">pystoch.</tt><tt class="descname">hist</tt><big>(</big><em>samples</em>, <em>title</em>, <em>labels=None</em>, <em>ymax=None</em>, <em>path=None</em><big>)</big><a class="headerlink" href="#pystoch.hist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pystoch.truehist">
+<tt class="descclassname">pystoch.</tt><tt class="descname">truehist</tt><big>(</big><em>samples</em>, <em>title</em>, <em>numbins=20</em>, <em>labels=None</em>, <em>ymax=None</em>, <em>path=None</em><big>)</big><a class="headerlink" href="#pystoch.truehist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pystoch.lineplot">
+<tt class="descclassname">pystoch.</tt><tt class="descname">lineplot</tt><big>(</big><em>x</em>, <em>y</em>, <em>title</em>, <em>labels=None</em>, <em>path=None</em><big>)</big><a class="headerlink" href="#pystoch.lineplot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pystoch.save">
+<tt class="descclassname">pystoch.</tt><tt class="descname">save</tt><big>(</big><em>path</em>, <em>width=16.5</em>, <em>height=16.5</em><big>)</big><a class="headerlink" href="#pystoch.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">PyStoch Module</a><ul>
+<li><a class="reference internal" href="#pystoch">pystoch</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="module.html"
+                        title="previous chapter">Source Documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="core.html"
+                        title="next chapter">Core Functionality</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/pystoch.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="core.html" title="Core Functionality"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="module.html" title="Source Documentation"
+             >previous</a> |</li>
+        <li><a href="index.html">PyStoch v1.0 documentation</a> &raquo;</li>
+          <li><a href="module.html" >Source Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Jessica Hamrick.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>

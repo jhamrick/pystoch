@@ -1,0 +1,264 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Core Functionality &mdash; PyStoch v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PyStoch v1.0 documentation" href="index.html" />
+    <link rel="up" title="Source Documentation" href="module.html" />
+    <link rel="next" title="Exchangeable Random Primitives (ERPs)" href="erps.html" />
+    <link rel="prev" title="PyStoch Module" href="pystoch.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="erps.html" title="Exchangeable Random Primitives (ERPs)"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pystoch.html" title="PyStoch Module"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">PyStoch v1.0 documentation</a> &raquo;</li>
+          <li><a href="module.html" accesskey="U">Source Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-pystoch.core">
+<span id="core-functionality"></span><h1>Core Functionality<a class="headerlink" href="#module-pystoch.core" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="pystoch-core">
+<h2>pystoch.core<a class="headerlink" href="#pystoch-core" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pystoch.core.PyStochObj">
+<em class="property">class </em><tt class="descclassname">pystoch.core.</tt><tt class="descname">PyStochObj</tt><a class="headerlink" href="#pystoch.core.PyStochObj" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class maintains the state of a trace of a PyStoch program.
+It keeps track of the current stack trace (using function, line,
+and loop stacks), as well as keeping a database of random choices,
+which stores the type, value, log likelihood, parameters and trace
+number.  Additionally, the PyStochObj keeps track of the number of
+random variables encountered, as well as their names.</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="pystoch.core.PyStochObj.call">
+<tt class="descname">call</tt><big>(</big><em>func</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pystoch.core.PyStochObj.call" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call a function.</p>
+<p>If the function is random (has the random attribute set to
+True), then call the function with arguments <cite>args</cite> and
+keyword arguments <cite>kwargs</cite>, additionally adding a
+PYSTOCHOBJ=self kwarg.</p>
+<p>If the function is an ERP (has the erp attribute set to True),
+then pass the function and its arguments to update_db.</p>
+<p>Otherwise, just call the function as normal.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>func</strong> : function</p>
+<blockquote>
+<div><p>The function to call</p>
+</div></blockquote>
+<p><strong>args</strong> : tuple of arguments</p>
+<blockquote>
+<div><p>The arguments to be passed to the function</p>
+</div></blockquote>
+<p><strong>kwargs</strong> : dictionary of keyword arguments</p>
+<blockquote>
+<div><p>The keyword arguments to be passed to the function</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>out</strong> : variable</p>
+<blockquote class="last">
+<div><p>The value of calling func with arguments <cite>args</cite> and keyword
+arguments <cite>kwargs</cite></p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.PyStochObj.clear_trace">
+<tt class="descname">clear_trace</tt><big>(</big><big>)</big><a class="headerlink" href="#pystoch.core.PyStochObj.clear_trace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear the current trace values.  This involves setting the
+trace log likelihood to zero, the number of random variables
+to zero, and the list of random variables to an empty list.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.PyStochObj.print_trace">
+<tt class="descname">print_trace</tt><big>(</big><big>)</big><a class="headerlink" href="#pystoch.core.PyStochObj.print_trace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the current stack trace, that is, the current values
+of the function, line, and loop stacks.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.PyStochObj.trace_update">
+<tt class="descname">trace_update</tt><big>(</big><em>func</em>, <em>db</em><big>)</big><a class="headerlink" href="#pystoch.core.PyStochObj.trace_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a new trace of <cite>func</cite>, using <cite>db</cite> as the new database of randomness.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>func</strong> : function</p>
+<blockquote>
+<div><p>The function to perform the trace on</p>
+</div></blockquote>
+<p><strong>db</strong> : dictionary</p>
+<blockquote>
+<div><p>The new database of randomness</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>out</strong> : three-tuple</p>
+<blockquote class="last">
+<div><p>(trace log likelihood, updated database, current trace number)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pystoch.core.PyStochObj.update_db">
+<tt class="descname">update_db</tt><big>(</big><em>erp_curr</em>, <em>args_curr</em><big>)</big><a class="headerlink" href="#pystoch.core.PyStochObj.update_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the database with the current random choice.</p>
+<p>If the choice already exists in the database via its name
+(determined by stack traces), and its parameters match the
+parameters stored in the database, then we can just reuse the
+old value.  If the parameters don&#8217;t match, then we recompute
+the likelihood of the stored value.  If the value isn&#8217;t found
+in the database at all, then we sample a new value and
+calculate its likelihood.  Finally, we update the database
+with the new value and likelihood, if necessary.</p>
+<dl class="docutils">
+<dt>erp_curr <span class="classifier-delimiter">:</span> <span class="classifier">function with erp attribute set to True</span></dt>
+<dd>The random choice to update the database with</dd>
+<dt>args_curr <span class="classifier-delimiter">:</span> <span class="classifier">tuple</span></dt>
+<dd>A two-tuple, with the first element being the arguments to
+pass to erp_curr and the second element being the keyword
+arguments to pass to erp_curr</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>out</strong> : number</p>
+<blockquote class="last">
+<div><p>The value of calling erp_curr with the current arguments</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Core Functionality</a><ul>
+<li><a class="reference internal" href="#pystoch-core">pystoch.core</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pystoch.html"
+                        title="previous chapter">PyStoch Module</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="erps.html"
+                        title="next chapter">Exchangeable Random Primitives (ERPs)</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/core.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="erps.html" title="Exchangeable Random Primitives (ERPs)"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pystoch.html" title="PyStoch Module"
+             >previous</a> |</li>
+        <li><a href="index.html">PyStoch v1.0 documentation</a> &raquo;</li>
+          <li><a href="module.html" >Source Documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Jessica Hamrick.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
+    </div>
+  </body>
+</html>
