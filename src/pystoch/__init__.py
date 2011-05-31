@@ -24,4 +24,4 @@ import transform
 import utilities
 
 from main import run
-__all__.extend('run')
+__all__.extend("run")

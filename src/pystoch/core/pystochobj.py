@@ -13,17 +13,16 @@ logger = logging.getLogger('pystoch')
 import numpy as np
 
 class PyStochObj(object):
-    """pystoch.PyStochObj
-
-    This class maintains the state of a trace of a PyStoch program.
+    """This class maintains the state of a trace of a PyStoch program.
     It keeps track of the current stack trace (using function, line,
     and loop stacks), as well as keeping a database of random choices,
     which stores the type, value, log likelihood, parameters and trace
     number.  Additionally, the PyStochObj keeps track of the number of
     random variables encountered, as well as their names.
 
-    Member Variables
-    ----------------
+    Variables
+    ---------
+
     self.func_stack : Stack
         The function stack. Used for naming random choices.
     self.line_stack : Stack
@@ -44,25 +43,6 @@ class PyStochObj(object):
         current trace
     self.trace_loglh : float
         The log likelihood so far of the current trace
-
-    Methods
-    -------
-
-    call(self, func, *args, **kwargs)
-        Call a function
-        
-    print_trace(self)
-        Print the current stack trace
-
-    trace_update(self, func, db)
-        Run a new trace of func using the specified database
-        
-    update_db(self, erp_curr, args_curr)
-        Update the database of randomness with the current ERP
-
-    clear(self)
-        Clear the number of random variables, the list of random
-        variables, and the trace log likelihood
 
     """
 
@@ -93,8 +73,9 @@ class PyStochObj(object):
         """Call a function.
 
         If the function is random (has the random attribute set to
-        True), then call the function with *args and **kwargs,
-        additionally adding a PYSTOCHOBJ=self kwarg.
+        True), then call the function with arguments `args` and
+        keyword arguments `kwargs`, additionally adding a
+        PYSTOCHOBJ=self kwarg.
 
         If the function is an ERP (has the erp attribute set to True),
         then pass the function and its arguments to update_db.
@@ -112,8 +93,9 @@ class PyStochObj(object):
 
         Returns
         -------
-        out : variable
-           The value of calling func(*args, **kwargs)
+        out : variable 
+           The value of calling func with arguments `args` and keyword
+           arguments `kwargs`
 
         """
         
@@ -176,7 +158,7 @@ class PyStochObj(object):
         calculate its likelihood.  Finally, we update the database
         with the new value and likelihood, if necessary.
 
-        Paramters
+        Parameters
         ---------
         erp_curr : function with erp attribute set to True
             The random choice to update the database with
@@ -188,7 +170,7 @@ class PyStochObj(object):
         Returns
         -------
         out : number
-            The value of calling erp_curr(*args_curr[0], **args_curr[1])
+            The value of calling erp_curr with the current arguments
 
         """
         
